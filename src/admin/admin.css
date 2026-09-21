@@ -1,4 +1,4 @@
-.a2ui-wp-playground {
+.a2ui-wp-playground__grid {
 	display: grid;
 	grid-template-columns: minmax(320px, 480px) 1fr;
 	gap: 24px;
@@ -8,7 +8,7 @@
 
 @media (max-width: 960px) {
 
-	.a2ui-wp-playground {
+	.a2ui-wp-playground__grid {
 		grid-template-columns: 1fr;
 	}
 }
@@ -53,6 +53,10 @@
 .a2ui-wp-playground textarea {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 11px;
+}
+
+.a2ui-wp-tabs .components-tab-panel__tab-content {
+	padding-top: 16px;
 }
 
 .a2ui-wp-surface .a2ui-wp-error {

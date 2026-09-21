@@ -15,4 +15,3 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 add_action( 'init', __NAMESPACE__ . '\register_assets' );
 add_action( 'admin_menu', __NAMESPACE__ . '\add_admin_menu' );
-add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\enqueue_admin_assets' );

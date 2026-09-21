@@ -73,47 +73,45 @@ function get_asset_meta( string $handle ): array {
 }
 
 /**
- * Adds the playground page under Tools.
+ * Adds the playground page under Tools and arranges for its assets.
  *
  * Tools rather than a top-level entry: the page is a place to try the
  * renderer against sample streams, not a feature people use every day.
  *
+ * The assets are enqueued from the page's own `load-` action, using the
+ * hook suffix `add_management_page()` hands back, rather than by comparing
+ * suffixes on `admin_enqueue_scripts`: the suffix is only computable once
+ * the Tools menu itself is registered, which a request that never loads
+ * `wp-admin/menu.php` (the REST API, the test suite) never does.
+ *
  * @return void
  */
 function add_admin_menu(): void {
-	add_management_page(
+	$hook_suffix = add_management_page(
 		__( 'A2UI', 'a2ui-wp' ),
 		__( 'A2UI', 'a2ui-wp' ),
 		'manage_options',
 		PAGE_SLUG,
 		__NAMESPACE__ . '\render_admin_page'
 	);
-}
 
-/**
- * Returns the hook suffix of the playground page, if it was registered.
- *
- * `add_management_page()` returns the hook suffix on registration and
- * `false` when the current user may not see the page, so this is computed
- * rather than remembered, and gives the same answer on every call.
- *
- * @return string Hook suffix, or an empty string when the page is not available.
- */
-function get_admin_page_hook(): string {
-	return (string) get_plugin_page_hookname( PAGE_SLUG, 'tools.php' );
-}
-
-/**
- * Enqueues the playground on its own page and nowhere else.
- *
- * @param string $hook_suffix The current admin page.
- * @return void
- */
-function enqueue_admin_assets( string $hook_suffix ): void {
-	if ( get_admin_page_hook() !== $hook_suffix ) {
+	// The page is not available to the current user.
+	if ( false === $hook_suffix ) {
 		return;
 	}
 
+	add_action( "load-$hook_suffix", __NAMESPACE__ . '\enqueue_admin_assets' );
+}
+
+/**
+ * Enqueues the playground's script and style.
+ *
+ * Runs on the page's `load-` action, so it never has to work out whether
+ * the current screen is the right one.
+ *
+ * @return void
+ */
+function enqueue_admin_assets(): void {
 	wp_enqueue_script( 'a2ui-wp-admin' );
 	wp_enqueue_style( 'a2ui-wp-admin' );
 }

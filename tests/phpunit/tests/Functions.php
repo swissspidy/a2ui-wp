@@ -13,7 +13,6 @@ use WP_UnitTestCase;
 
 use function A2UIWP\add_admin_menu;
 use function A2UIWP\enqueue_admin_assets;
-use function A2UIWP\get_admin_page_hook;
 use function A2UIWP\get_asset_meta;
 use function A2UIWP\register_assets;
 use function A2UIWP\render_admin_page;
@@ -73,7 +72,6 @@ class Test_Functions extends WP_UnitTestCase {
 
 	/**
 	 * @covers \A2UIWP\add_admin_menu
-	 * @covers \A2UIWP\get_admin_page_hook
 	 */
 	public function test_add_admin_menu_adds_page_under_tools(): void {
 		wp_set_current_user( self::$admin_id );
@@ -84,23 +82,43 @@ class Test_Functions extends WP_UnitTestCase {
 		$slugs = array_column( $GLOBALS['submenu']['tools.php'] ?? [], 2 );
 
 		$this->assertContains( 'a2ui-wp', $slugs );
-		$this->assertSame( 'tools_page_a2ui-wp', get_admin_page_hook() );
+
+		// The test suite never loads wp-admin/menu.php, so the suffix lacks the
+		// `tools_page_` prefix it has in a real admin request; what matters is
+		// that the plugin hooks whatever suffix WordPress handed it.
+		$hook_suffix = get_plugin_page_hookname( 'a2ui-wp', 'tools.php' );
+
+		$this->assertSame( 10, has_action( "load-$hook_suffix", 'A2UIWP\enqueue_admin_assets' ) );
+	}
+
+	/**
+	 * @covers \A2UIWP\add_admin_menu
+	 */
+	public function test_add_admin_menu_does_nothing_for_users_without_capability(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+		set_current_screen( 'tools.php' );
+
+		add_admin_menu();
+
+		$slugs = array_column( $GLOBALS['submenu']['tools.php'] ?? [], 2 );
+
+		$this->assertNotContains( 'a2ui-wp', $slugs );
+
+		$hook_suffix = get_plugin_page_hookname( 'a2ui-wp', 'tools.php' );
+
+		$this->assertFalse( has_action( "load-$hook_suffix", 'A2UIWP\enqueue_admin_assets' ) );
 	}
 
 	/**
 	 * @covers \A2UIWP\enqueue_admin_assets
 	 */
-	public function test_enqueue_admin_assets_only_on_own_page(): void {
-		wp_set_current_user( self::$admin_id );
-		set_current_screen( 'tools.php' );
-
+	public function test_enqueue_admin_assets_enqueues_registered_assets(): void {
 		register_assets();
-		add_admin_menu();
 
-		enqueue_admin_assets( 'edit.php' );
 		$this->assertFalse( wp_script_is( 'a2ui-wp-admin', 'enqueued' ) );
 
-		enqueue_admin_assets( 'tools_page_a2ui-wp' );
+		enqueue_admin_assets();
+
 		$this->assertTrue( wp_script_is( 'a2ui-wp-admin', 'enqueued' ) );
 		$this->assertTrue( wp_style_is( 'a2ui-wp-admin', 'enqueued' ) );
 	}
