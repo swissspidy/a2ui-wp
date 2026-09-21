@@ -1,0 +1,70 @@
+name: Plugin Check
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+    plugin-check:
+        name: Plugin Check
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Setup Node
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build plugin
+              run: npm run build
+
+            # github-token: '' — setup-php writes this into Composer's global,
+            # job-wide auth.json while installing wp-cli, and the step below
+            # needs that file to *not* contain a token.
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: latest
+                  coverage: none
+                  tools: wp-cli
+                  github-token: ''
+
+            # `wp package install` hands the job to Composer, which registers
+            # the package as a VCS repository and clones it. Unauthenticated
+            # against the GitHub API, Composer reaches for the SSH remote, and
+            # the runner has no key. Rewriting the remote at the git level
+            # fixes it wherever Composer's own config happens to live.
+            - name: Clone GitHub over HTTPS
+              run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+            - name: Install compatible version of dist-archive-command
+              run: wp package install wp-cli/dist-archive-command:3.1.0
+
+            # Plugin Check should see exactly what a directory submission would
+            # ship, not the dev sources that only exist in this repo.
+            - name: Build distributable copy
+              run: |
+                  wp dist-archive . ./a2ui-wp.zip
+                  mkdir dist
+                  unzip a2ui-wp.zip -d dist
+
+            - name: Run Plugin Check
+              uses: wordpress/plugin-check-action@v1
+              with:
+                  build-dir: './dist/a2ui-wp'

@@ -27,15 +27,30 @@ export function isDataBinding( value: unknown ): value is DataBinding {
 }
 
 export function isFunctionCall( value: unknown ): value is FunctionCall {
-	return typeof value === 'object' && value !== null && ! Array.isArray( value ) && typeof ( value as FunctionCall ).call === 'string';
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		! Array.isArray( value ) &&
+		typeof ( value as FunctionCall ).call === 'string'
+	);
 }
 
-/** Turns a possibly relative binding path into an absolute pointer. */
-export function resolvePath( path: string, scope: Pick< ResolveScope, 'scopePath' > ): string {
+/**
+ * Turns a possibly relative binding path into an absolute pointer.
+ * @param path  JSON Pointer.
+ * @param scope Resolution scope.
+ */
+export function resolvePath(
+	path: string,
+	scope: Pick< ResolveScope, 'scopePath' >
+): string {
 	return joinPointer( scope.scopePath, path );
 }
 
-export function resolveDynamicValue( value: unknown, scope: ResolveScope ): unknown {
+export function resolveDynamicValue(
+	value: unknown,
+	scope: ResolveScope
+): unknown {
 	if ( value === null || value === undefined || typeof value !== 'object' ) {
 		return value;
 	}
@@ -52,7 +67,10 @@ export function resolveDynamicValue( value: unknown, scope: ResolveScope ): unkn
 	return value;
 }
 
-export function invokeFunction( call: FunctionCall, scope: ResolveScope ): unknown {
+export function invokeFunction(
+	call: FunctionCall,
+	scope: ResolveScope
+): unknown {
 	const implementation = scope.functions[ call.call ];
 	if ( ! implementation ) {
 		throw new Error( `Unknown function '${ call.call }'.` );
@@ -67,24 +85,44 @@ export function invokeFunction( call: FunctionCall, scope: ResolveScope ): unkno
 	} );
 }
 
-/** Convenience wrappers with type coercion. */
+/**
+ * Convenience wrappers with type coercion.
+ * @param value Value to resolve.
+ * @param scope Resolution scope.
+ */
 export function resolveString( value: unknown, scope: ResolveScope ): string {
 	const resolved = resolveDynamicValue( value, scope );
-	if ( resolved === null || resolved === undefined ) return '';
-	return typeof resolved === 'object' ? JSON.stringify( resolved ) : String( resolved );
+	if ( resolved === null || resolved === undefined ) {
+		return '';
+	}
+	return typeof resolved === 'object'
+		? JSON.stringify( resolved )
+		: String( resolved );
 }
 
-export function resolveNumber( value: unknown, scope: ResolveScope, fallback = 0 ): number {
+export function resolveNumber(
+	value: unknown,
+	scope: ResolveScope,
+	fallback = 0
+): number {
 	const resolved = resolveDynamicValue( value, scope );
 	const n = typeof resolved === 'number' ? resolved : Number( resolved );
-	return Number.isNaN( n ) || resolved === '' || resolved === null || resolved === undefined ? fallback : n;
+	return Number.isNaN( n ) ||
+		resolved === '' ||
+		resolved === null ||
+		resolved === undefined
+		? fallback
+		: n;
 }
 
 export function resolveBoolean( value: unknown, scope: ResolveScope ): boolean {
 	return Boolean( resolveDynamicValue( value, scope ) );
 }
 
-export function resolveStringList( value: unknown, scope: ResolveScope ): string[] {
+export function resolveStringList(
+	value: unknown,
+	scope: ResolveScope
+): string[] {
 	const resolved = resolveDynamicValue( value, scope );
 	if ( Array.isArray( resolved ) ) {
 		return resolved.map( ( item ) => String( item ) );

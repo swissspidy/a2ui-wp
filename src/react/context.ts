@@ -1,5 +1,5 @@
-import { createContext, useContext } from 'react';
-import type { ComponentType } from 'react';
+import { createContext, useContext } from '@wordpress/element';
+import type { ComponentType } from '@wordpress/element';
 import type { A2UIProcessor } from '../core/processor';
 import type { Surface } from '../core/surface';
 
@@ -11,8 +11,10 @@ export interface A2UIComponentProps< P = Record< string, unknown > > {
 	props: P;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ComponentCatalog = Record< string, ComponentType< A2UIComponentProps< any > > >;
+export type ComponentCatalog = Record<
+	string,
+	ComponentType< A2UIComponentProps< any > >
+>;
 
 export const ProcessorContext = createContext< A2UIProcessor | null >( null );
 export const SurfaceContext = createContext< Surface | null >( null );
@@ -23,7 +25,9 @@ export const CatalogContext = createContext< ComponentCatalog >( {} );
 export function useProcessor(): A2UIProcessor {
 	const processor = useContext( ProcessorContext );
 	if ( ! processor ) {
-		throw new Error( 'A2UI components must be rendered inside <A2UISurface>.' );
+		throw new Error(
+			'A2UI components must be rendered inside <A2UISurface>.'
+		);
 	}
 	return processor;
 }
@@ -31,7 +35,9 @@ export function useProcessor(): A2UIProcessor {
 export function useSurface(): Surface {
 	const surface = useContext( SurfaceContext );
 	if ( ! surface ) {
-		throw new Error( 'A2UI components must be rendered inside <A2UISurface>.' );
+		throw new Error(
+			'A2UI components must be rendered inside <A2UISurface>.'
+		);
 	}
 	return surface;
 }

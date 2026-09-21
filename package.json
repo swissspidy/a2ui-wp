@@ -1,36 +1,57 @@
 {
-  "name": "a2ui-wp",
-  "version": "0.1.0",
-  "description": "A2UI renderer built on the WordPress/Gutenberg component library (@wordpress/components). Proof of concept.",
-  "license": "GPL-2.0-or-later",
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -p tsconfig.build.json && vite build",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "@wordpress/components": "^40.1.0",
-    "@wordpress/i18n": "^6.28.0",
-    "@wordpress/icons": "^16.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@testing-library/dom": "^10.4.2",
-    "@testing-library/react": "^16.3.3",
-    "@types/react": "^18.3.31",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^6.1.1",
-    "jsdom": "^30.1.0",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.1"
-  }
+	"name": "a2ui-wp",
+	"version": "0.1.0",
+	"description": "Renders agent-generated A2UI surfaces inside wp-admin with the WordPress component library.",
+	"author": "Pascal Birchler",
+	"license": "GPL-2.0-or-later",
+	"keywords": [
+		"wordpress",
+		"wordpress-plugin",
+		"a2ui",
+		"agents",
+		"components"
+	],
+	"homepage": "https://github.com/swissspidy/a2ui-wp",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/swissspidy/a2ui-wp.git"
+	},
+	"bugs": {
+		"url": "https://github.com/swissspidy/a2ui-wp/issues"
+	},
+	"engines": {
+		"node": ">=22"
+	},
+	"private": true,
+	"devDependencies": {
+		"@playwright/test": "^1.63.0",
+		"@testing-library/react": "^16.3.0",
+		"@types/jest": "^30.0.0",
+		"@types/react": "^18.3.27",
+		"@types/react-dom": "^18.3.7",
+		"@wordpress/components": "^40.1.0",
+		"@wordpress/dom-ready": "^4.55.0",
+		"@wordpress/e2e-test-utils-playwright": "^2.0.0",
+		"@wordpress/element": "^8.7.0",
+		"@wordpress/env": "^11.15.0",
+		"@wordpress/eslint-plugin": "^26.0.0",
+		"@wordpress/i18n": "^6.28.0",
+		"@wordpress/icons": "^16.0.0",
+		"@wordpress/jest-preset-default": "^14.2.0",
+		"@wordpress/scripts": "^35.0.0",
+		"typescript": "^5.9.3"
+	},
+	"scripts": {
+		"build": "wp-scripts build",
+		"start": "wp-scripts start",
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"lint:js:fix": "wp-scripts lint-js --fix",
+		"lint:pkg-json": "wp-scripts lint-pkg-json",
+		"typecheck": "tsc --noEmit",
+		"wp-env": "wp-env",
+		"test:unit": "wp-scripts test-unit-js",
+		"test:e2e": "wp-scripts test-playwright --config tests/e2e/playwright.config.ts"
+	}
 }

@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from '@wordpress/element';
 import type { CSSProperties, ReactNode } from 'react';
 import { __experimentalVStack as VStack } from '@wordpress/components';
 import type { A2UIProcessor, ActionListener } from '../core/processor';
 import { ROOT_COMPONENT_ID } from '../core/surface';
 import { wordPressCatalog } from './catalog';
-import { CatalogContext, ProcessorContext, SurfaceContext, type ComponentCatalog } from './context';
+import {
+	CatalogContext,
+	ProcessorContext,
+	SurfaceContext,
+	type ComponentCatalog,
+} from './context';
 import { A2UINode } from './node';
 
 function useProcessorVersion( processor: A2UIProcessor ) {
@@ -15,9 +20,15 @@ function useProcessorVersion( processor: A2UIProcessor ) {
 	);
 }
 
-/** Maps A2UI theme parameters onto the WordPress admin theme variables. */
-function themeStyle( theme: Record< string, unknown > ): CSSProperties | undefined {
-	const primary = typeof theme.primaryColor === 'string' ? theme.primaryColor : undefined;
+/**
+ * Maps A2UI theme parameters onto the WordPress admin theme variables.
+ * @param theme Theme parameters from `createSurface`.
+ */
+function themeStyle(
+	theme: Record< string, unknown >
+): CSSProperties | undefined {
+	const primary =
+		typeof theme.primaryColor === 'string' ? theme.primaryColor : undefined;
 	if ( ! primary ) {
 		return undefined;
 	}
@@ -37,8 +48,10 @@ function hexToRgb( hex: string ): string | undefined {
 	if ( ! match ) {
 		return undefined;
 	}
-	const value = parseInt( match[ 1 ], 16 );
-	return `${ ( value >> 16 ) & 255 }, ${ ( value >> 8 ) & 255 }, ${ value & 255 }`;
+	const hexValue = match[ 1 ];
+	const channel = ( offset: number ) =>
+		parseInt( hexValue.slice( offset, offset + 2 ), 16 );
+	return `${ channel( 0 ) }, ${ channel( 2 ) }, ${ channel( 4 ) }`;
 }
 
 export interface A2UISurfaceProps {
@@ -51,11 +64,25 @@ export interface A2UISurfaceProps {
 	className?: string;
 }
 
-/** Renders a single surface. */
-export function A2UISurface( { processor, surfaceId, catalog = wordPressCatalog, placeholder = null, className }: A2UISurfaceProps ) {
+/**
+ * Renders a single surface.
+ *
+ * @param props Component props.
+ */
+export function A2UISurface( props: A2UISurfaceProps ) {
+	const {
+		processor,
+		surfaceId,
+		catalog = wordPressCatalog,
+		placeholder = null,
+		className,
+	} = props;
 	useProcessorVersion( processor );
 	const surface = processor.getSurface( surfaceId );
-	const style = useMemo( () => ( surface ? themeStyle( surface.theme ) : undefined ), [ surface ] );
+	const style = useMemo(
+		() => ( surface ? themeStyle( surface.theme ) : undefined ),
+		[ surface ]
+	);
 
 	if ( ! surface || ! surface.root ) {
 		return <>{ placeholder }</>;
@@ -65,7 +92,13 @@ export function A2UISurface( { processor, surfaceId, catalog = wordPressCatalog,
 		<ProcessorContext.Provider value={ processor }>
 			<SurfaceContext.Provider value={ surface }>
 				<CatalogContext.Provider value={ catalog }>
-					<div className={ [ 'a2ui-wp-surface', className ].filter( Boolean ).join( ' ' ) } data-surface-id={ surfaceId } style={ style }>
+					<div
+						className={ [ 'a2ui-wp-surface', className ]
+							.filter( Boolean )
+							.join( ' ' ) }
+						data-surface-id={ surfaceId }
+						style={ style }
+					>
 						<A2UINode id={ ROOT_COMPONENT_ID } />
 					</div>
 				</CatalogContext.Provider>
@@ -83,8 +116,13 @@ export interface A2UIRendererProps {
 	emptyState?: ReactNode;
 }
 
-/** Renders every surface the processor knows about, stacked vertically. */
-export function A2UIRenderer( { processor, catalog, onAction, emptyState = null }: A2UIRendererProps ) {
+/**
+ * Renders every surface the processor knows about, stacked vertically.
+ *
+ * @param props Component props.
+ */
+export function A2UIRenderer( props: A2UIRendererProps ) {
+	const { processor, catalog, onAction, emptyState = null } = props;
 	useProcessorVersion( processor );
 
 	useEffect( () => {
@@ -102,7 +140,12 @@ export function A2UIRenderer( { processor, catalog, onAction, emptyState = null 
 	return (
 		<VStack spacing={ 4 } className="a2ui-wp-surfaces">
 			{ surfaceIds.map( ( surfaceId ) => (
-				<A2UISurface key={ surfaceId } processor={ processor } surfaceId={ surfaceId } catalog={ catalog } />
+				<A2UISurface
+					key={ surfaceId }
+					processor={ processor }
+					surfaceId={ surfaceId }
+					catalog={ catalog }
+				/>
 			) ) }
 		</VStack>
 	);

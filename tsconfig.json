@@ -1,20 +1,20 @@
 {
 	"compilerOptions": {
-		"target": "ES2020",
-		"lib": [ "ES2022", "DOM", "DOM.Iterable" ],
-		"module": "ESNext",
+		"target": "esnext",
+		"module": "esnext",
 		"moduleResolution": "bundler",
 		"jsx": "react-jsx",
+		"lib": [ "dom", "dom.iterable", "esnext" ],
 		"strict": true,
 		"noUnusedLocals": true,
-		"noUnusedParameters": false,
-		"noFallthroughCasesInSwitch": true,
-		"skipLibCheck": true,
+		"noEmit": true,
 		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"noEmit": true,
-		"types": [ "vite/client" ]
+		"types": [ "node", "jest" ]
 	},
-	"include": [ "src", "test", "demo" ]
+	"include": [ "src/**/*", "tests/js/**/*", "tests/e2e/**/*" ]
 }

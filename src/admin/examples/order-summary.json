@@ -1,0 +1,200 @@
+{
+	"name": "Order summary (list template)",
+	"description": "A List whose children are a template expanded over an array in the data model, with relative bindings and formatCurrency / pluralize.",
+	"messages": [
+		{
+			"version": "v0.9.1",
+			"createSurface": {
+				"surfaceId": "order",
+				"catalogId": "https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json",
+				"sendDataModel": true
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateComponents": {
+				"surfaceId": "order",
+				"components": [
+					{ "id": "root", "component": "Card", "child": "layout" },
+					{
+						"id": "layout",
+						"component": "Column",
+						"children": [
+							"title",
+							"count",
+							"items",
+							"divider",
+							"total-row",
+							"checkout"
+						]
+					},
+					{
+						"id": "title",
+						"component": "Text",
+						"variant": "h2",
+						"text": { "path": "/storeName" }
+					},
+					{
+						"id": "count",
+						"component": "Text",
+						"variant": "caption",
+						"text": {
+							"call": "formatString",
+							"args": {
+								"value": "${/itemCount} ${pluralize(value: ${/itemCount}, one: 'item', other: 'items')} in your cart"
+							},
+							"returnType": "string"
+						}
+					},
+					{
+						"id": "items",
+						"component": "List",
+						"children": {
+							"path": "/items",
+							"componentId": "item-template"
+						}
+					},
+					{
+						"id": "item-template",
+						"component": "Row",
+						"justify": "spaceBetween",
+						"align": "center",
+						"children": [ "item-details", "item-price" ]
+					},
+					{
+						"id": "item-details",
+						"component": "Column",
+						"children": [ "item-name", "item-meta" ]
+					},
+					{
+						"id": "item-name",
+						"component": "Text",
+						"text": { "path": "name" }
+					},
+					{
+						"id": "item-meta",
+						"component": "Text",
+						"variant": "caption",
+						"text": {
+							"call": "formatString",
+							"args": { "value": "Qty ${quantity} · ${sku}" },
+							"returnType": "string"
+						}
+					},
+					{
+						"id": "item-price",
+						"component": "Text",
+						"text": {
+							"call": "formatCurrency",
+							"args": {
+								"value": { "path": "price" },
+								"currency": "EUR"
+							},
+							"returnType": "string"
+						}
+					},
+					{ "id": "divider", "component": "Divider" },
+					{
+						"id": "total-row",
+						"component": "Row",
+						"justify": "spaceBetween",
+						"children": [ "total-label", "total-value" ]
+					},
+					{
+						"id": "total-label",
+						"component": "Text",
+						"variant": "h4",
+						"text": "Total"
+					},
+					{
+						"id": "total-value",
+						"component": "Text",
+						"variant": "h4",
+						"text": {
+							"call": "formatCurrency",
+							"args": {
+								"value": { "path": "/total" },
+								"currency": "EUR"
+							},
+							"returnType": "string"
+						}
+					},
+					{
+						"id": "checkout-label",
+						"component": "Text",
+						"text": "Checkout"
+					},
+					{
+						"id": "checkout",
+						"component": "Button",
+						"variant": "primary",
+						"child": "checkout-label",
+						"action": {
+							"event": {
+								"name": "checkout",
+								"context": {
+									"total": { "path": "/total" },
+									"items": { "path": "/items" }
+								}
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "order",
+				"value": {
+					"storeName": "Block Bakery",
+					"itemCount": 3,
+					"items": [
+						{
+							"name": "Sourdough loaf",
+							"sku": "BRD-01",
+							"quantity": 1,
+							"price": 6.5
+						},
+						{
+							"name": "Cinnamon roll",
+							"sku": "PST-07",
+							"quantity": 2,
+							"price": 3.25
+						}
+					],
+					"total": 13
+				}
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "order",
+				"path": "/items/2",
+				"value": {
+					"name": "Oat latte",
+					"sku": "DRK-03",
+					"quantity": 1,
+					"price": 4.2
+				}
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "order",
+				"path": "/itemCount",
+				"value": 4
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "order",
+				"path": "/total",
+				"value": 17.2
+			}
+		}
+	]
+}

@@ -7,7 +7,8 @@
  */
 
 export type JsonPrimitive = string | number | boolean | null;
-export type JsonValue = JsonPrimitive | JsonValue[] | { [ key: string ]: JsonValue };
+export type JsonValue =
+	JsonPrimitive | JsonValue[] | { [ key: string ]: JsonValue };
 export type JsonObject = { [ key: string ]: JsonValue };
 
 /** A reference to a value in the surface data model (RFC 6901 JSON Pointer). */
@@ -16,13 +17,7 @@ export interface DataBinding {
 }
 
 export type FunctionReturnType =
-	| 'string'
-	| 'number'
-	| 'boolean'
-	| 'array'
-	| 'object'
-	| 'any'
-	| 'void';
+	'string' | 'number' | 'boolean' | 'array' | 'object' | 'any' | 'void';
 
 /** Invokes a named client-side function from the surface's catalog. */
 export interface FunctionCall {

@@ -1,0 +1,145 @@
+{
+	"name": "Tabs, Modal and media",
+	"description": "Tabs with a child per tab, a Modal opened from a Button trigger, and Video / AudioPlayer components.",
+	"messages": [
+		{
+			"version": "v0.9.1",
+			"createSurface": {
+				"surfaceId": "media",
+				"catalogId": "https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json"
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateComponents": {
+				"surfaceId": "media",
+				"components": [
+					{
+						"id": "root",
+						"component": "Column",
+						"children": [ "title", "tabs", "modal" ]
+					},
+					{
+						"id": "title",
+						"component": "Text",
+						"variant": "h2",
+						"text": "Release notes"
+					},
+					{
+						"id": "tabs",
+						"component": "Tabs",
+						"tabs": [
+							{ "title": "Overview", "child": "overview" },
+							{ "title": "Video", "child": "video" },
+							{ "title": "Podcast", "child": "podcast" }
+						]
+					},
+					{
+						"id": "overview",
+						"component": "Column",
+						"children": [ "overview-text", "overview-list" ]
+					},
+					{
+						"id": "overview-text",
+						"component": "Text",
+						"text": "Highlights of this release:"
+					},
+					{
+						"id": "overview-list",
+						"component": "List",
+						"children": {
+							"path": "/highlights",
+							"componentId": "highlight"
+						}
+					},
+					{
+						"id": "highlight",
+						"component": "Row",
+						"align": "center",
+						"children": [ "highlight-icon", "highlight-text" ]
+					},
+					{
+						"id": "highlight-icon",
+						"component": "Icon",
+						"name": { "path": "icon" }
+					},
+					{
+						"id": "highlight-text",
+						"component": "Text",
+						"text": { "path": "text" }
+					},
+					{
+						"id": "video",
+						"component": "Video",
+						"url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+					},
+					{
+						"id": "podcast",
+						"component": "AudioPlayer",
+						"description": "Episode 12 — What's new",
+						"url": "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3"
+					},
+					{
+						"id": "modal",
+						"component": "Modal",
+						"trigger": "modal-button",
+						"content": "modal-body",
+						"accessibility": { "label": "Upgrade details" }
+					},
+					{
+						"id": "modal-button-label",
+						"component": "Text",
+						"text": "Show upgrade details"
+					},
+					{
+						"id": "modal-button",
+						"component": "Button",
+						"child": "modal-button-label",
+						"action": { "event": { "name": "open_details" } }
+					},
+					{
+						"id": "modal-body",
+						"component": "Column",
+						"children": [ "modal-text", "modal-close" ]
+					},
+					{
+						"id": "modal-text",
+						"component": "Text",
+						"text": "The upgrade runs in the background and takes about two minutes. Your site stays online."
+					},
+					{
+						"id": "modal-close-label",
+						"component": "Text",
+						"text": "Start upgrade"
+					},
+					{
+						"id": "modal-close",
+						"component": "Button",
+						"variant": "primary",
+						"child": "modal-close-label",
+						"action": {
+							"event": {
+								"name": "start_upgrade",
+								"context": { "version": { "path": "/version" } }
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "media",
+				"value": {
+					"version": "7.1",
+					"highlights": [
+						{ "icon": "check", "text": "Faster block rendering" },
+						{ "icon": "star", "text": "New pattern library" },
+						{ "icon": "lock", "text": "Passkey sign-in" }
+					]
+				}
+			}
+		}
+	]
+}

@@ -1,0 +1,217 @@
+{
+	"name": "Sign-up form (validation)",
+	"description": "TextField, CheckBox, ChoicePicker, Slider and DateTimeInput bound to the data model with checks; the submit Button is disabled until every check passes and sends the whole form in its context.",
+	"messages": [
+		{
+			"version": "v0.9.1",
+			"createSurface": {
+				"surfaceId": "signup",
+				"catalogId": "https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json",
+				"sendDataModel": true
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateComponents": {
+				"surfaceId": "signup",
+				"components": [
+					{ "id": "root", "component": "Card", "child": "form" },
+					{
+						"id": "form",
+						"component": "Column",
+						"children": [
+							"heading",
+							"intro",
+							"name",
+							"email",
+							"plan",
+							"interests",
+							"seats",
+							"start",
+							"terms",
+							"submit"
+						]
+					},
+					{
+						"id": "heading",
+						"component": "Text",
+						"variant": "h2",
+						"text": "Create your account"
+					},
+					{
+						"id": "intro",
+						"component": "Text",
+						"variant": "caption",
+						"text": {
+							"call": "formatString",
+							"args": {
+								"value": "Today is ${formatDate(value: ${/now}, format: 'EEEE, MMMM d, yyyy')}."
+							},
+							"returnType": "string"
+						}
+					},
+					{
+						"id": "name",
+						"component": "TextField",
+						"label": "Display name",
+						"value": { "path": "/form/name" },
+						"checks": [
+							{
+								"condition": {
+									"call": "required",
+									"args": {
+										"value": { "path": "/form/name" }
+									}
+								},
+								"message": "A display name is required."
+							},
+							{
+								"condition": {
+									"call": "length",
+									"args": {
+										"value": { "path": "/form/name" },
+										"max": 30
+									}
+								},
+								"message": "Keep it under 30 characters."
+							}
+						]
+					},
+					{
+						"id": "email",
+						"component": "TextField",
+						"label": "Email",
+						"value": { "path": "/form/email" },
+						"checks": [
+							{
+								"condition": {
+									"call": "email",
+									"args": {
+										"value": { "path": "/form/email" }
+									}
+								},
+								"message": "Enter a valid email address."
+							}
+						]
+					},
+					{
+						"id": "plan",
+						"component": "ChoicePicker",
+						"label": "Plan",
+						"variant": "mutuallyExclusive",
+						"displayStyle": "chips",
+						"value": { "path": "/form/plan" },
+						"options": [
+							{ "label": "Free", "value": "free" },
+							{ "label": "Personal", "value": "personal" },
+							{ "label": "Business", "value": "business" }
+						]
+					},
+					{
+						"id": "interests",
+						"component": "ChoicePicker",
+						"label": "Interests",
+						"variant": "multipleSelection",
+						"displayStyle": "checkbox",
+						"value": { "path": "/form/interests" },
+						"options": [
+							{ "label": "Block themes", "value": "themes" },
+							{ "label": "Plugins", "value": "plugins" },
+							{
+								"label": "Site editing",
+								"value": "site-editing"
+							},
+							{ "label": "Performance", "value": "performance" }
+						]
+					},
+					{
+						"id": "seats",
+						"component": "Slider",
+						"label": "Team seats",
+						"min": 1,
+						"max": 25,
+						"value": { "path": "/form/seats" }
+					},
+					{
+						"id": "start",
+						"component": "DateTimeInput",
+						"label": "Start date",
+						"enableDate": true,
+						"enableTime": false,
+						"value": { "path": "/form/start" }
+					},
+					{
+						"id": "terms",
+						"component": "CheckBox",
+						"label": "I agree to the terms of service",
+						"value": { "path": "/form/terms" }
+					},
+					{
+						"id": "submit-label",
+						"component": "Text",
+						"text": "Create account"
+					},
+					{
+						"id": "submit",
+						"component": "Button",
+						"variant": "primary",
+						"child": "submit-label",
+						"checks": [
+							{
+								"condition": {
+									"call": "and",
+									"args": {
+										"values": [
+											{ "path": "/form/terms" },
+											{
+												"call": "required",
+												"args": {
+													"value": {
+														"path": "/form/name"
+													}
+												}
+											},
+											{
+												"call": "email",
+												"args": {
+													"value": {
+														"path": "/form/email"
+													}
+												}
+											}
+										]
+									}
+								},
+								"message": "Fill in a name and a valid email, and accept the terms."
+							}
+						],
+						"action": {
+							"event": {
+								"name": "create_account",
+								"context": { "form": { "path": "/form" } }
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "signup",
+				"value": {
+					"now": "2026-09-21T09:00:00Z",
+					"form": {
+						"name": "",
+						"email": "",
+						"plan": [ "free" ],
+						"interests": [ "themes" ],
+						"seats": 3,
+						"start": "",
+						"terms": false
+					}
+				}
+			}
+		}
+	]
+}

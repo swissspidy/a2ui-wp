@@ -13,7 +13,14 @@ import type { A2UIComponentProps } from '../context';
 import { useResolveScope } from '../hooks';
 import { A2UIChildren, A2UINode } from '../node';
 
-type Justify = 'start' | 'center' | 'end' | 'spaceBetween' | 'spaceAround' | 'spaceEvenly' | 'stretch';
+type Justify =
+	| 'start'
+	| 'center'
+	| 'end'
+	| 'spaceBetween'
+	| 'spaceAround'
+	| 'spaceEvenly'
+	| 'stretch';
 type Align = 'start' | 'center' | 'end' | 'stretch';
 
 const JUSTIFY: Record< Justify, CSSProperties[ 'justifyContent' ] > = {
@@ -80,9 +87,17 @@ export function List( { props }: A2UIComponentProps< ListProps > ) {
 	return (
 		<div
 			className={ `a2ui-wp-list is-${ horizontal ? 'horizontal' : 'vertical' }` }
-			style={ { overflow: 'auto', maxHeight: horizontal ? undefined : '60vh' } }
+			style={ {
+				overflow: 'auto',
+				maxHeight: horizontal ? undefined : '60vh',
+			} }
 		>
-			<Stack spacing={ 3 } wrap={ false } alignment={ ALIGN[ props.align ?? 'stretch' ] } justify="flex-start">
+			<Stack
+				spacing={ 3 }
+				wrap={ false }
+				alignment={ ALIGN[ props.align ?? 'stretch' ] }
+				justify="flex-start"
+			>
 				<A2UIChildren>{ props.children }</A2UIChildren>
 			</Stack>
 		</div>
@@ -119,7 +134,9 @@ export function Tabs( { id, props }: A2UIComponentProps< TabsProps > ) {
 	}
 	return (
 		<TabPanel className="a2ui-wp-tabs" tabs={ tabs }>
-			{ ( tab ) => <A2UINode id={ ( tab as ( typeof tabs )[ number ] ).child } /> }
+			{ ( tab ) => (
+				<A2UINode id={ ( tab as ( typeof tabs )[ number ] ).child } />
+			) }
 		</TabPanel>
 	);
 }
@@ -129,5 +146,7 @@ export interface DividerProps {
 }
 
 export function Divider( { props }: A2UIComponentProps< DividerProps > ) {
-	return <WPDivider orientation={ props.axis ?? 'horizontal' } margin={ 2 } />;
+	return (
+		<WPDivider orientation={ props.axis ?? 'horizontal' } margin={ 2 } />
+	);
 }

@@ -14,7 +14,10 @@ export interface FunctionContext {
 }
 
 /** Receives already-resolved arguments. */
-export type FunctionImplementation = ( args: Record< string, unknown >, context: FunctionContext ) => unknown;
+export type FunctionImplementation = (
+	args: Record< string, unknown >,
+	context: FunctionContext
+) => unknown;
 
 export type FunctionRegistry = Record< string, FunctionImplementation >;
 
@@ -24,7 +27,10 @@ export interface BasicFunctionOptions {
 	openUrl?: ( url: string ) => void;
 }
 
-/** Coerces a value to a string per the protocol's type conversion rules. */
+/**
+ * Coerces a value to a string per the protocol's type conversion rules.
+ * @param value Any value.
+ */
 export function coerceToString( value: unknown ): string {
 	if ( value === null || value === undefined ) {
 		return '';
@@ -39,7 +45,8 @@ export function coerceToString( value: unknown ): string {
 	return String( value );
 }
 
-const toNumber = ( value: unknown ) => ( typeof value === 'number' ? value : Number( value ) );
+const toNumber = ( value: unknown ) =>
+	typeof value === 'number' ? value : Number( value );
 
 function defaultOpenUrl( raw: string ) {
 	if ( typeof window === 'undefined' ) {
@@ -57,7 +64,9 @@ function defaultOpenUrl( raw: string ) {
 	window.open( url.href, '_blank', 'noopener,noreferrer' );
 }
 
-export function createBasicFunctions( options: BasicFunctionOptions = {} ): FunctionRegistry {
+export function createBasicFunctions(
+	options: BasicFunctionOptions = {}
+): FunctionRegistry {
 	const { locale } = options;
 	const openUrl = options.openUrl ?? defaultOpenUrl;
 
@@ -69,7 +78,9 @@ export function createBasicFunctions( options: BasicFunctionOptions = {} ): Func
 		divide: ( { a, b } ) => {
 			const x = toNumber( a );
 			const y = toNumber( b );
-			if ( Number.isNaN( x ) || Number.isNaN( y ) ) return NaN;
+			if ( Number.isNaN( x ) || Number.isNaN( y ) ) {
+				return NaN;
+			}
 			return y === 0 ? Infinity : x / y;
 		},
 
@@ -80,43 +91,73 @@ export function createBasicFunctions( options: BasicFunctionOptions = {} ): Func
 		lessThan: ( { a, b } ) => toNumber( a ) < toNumber( b ),
 
 		// Logic
-		and: ( { values } ) => Array.isArray( values ) && values.every( Boolean ),
+		and: ( { values } ) =>
+			Array.isArray( values ) && values.every( Boolean ),
 		or: ( { values } ) => Array.isArray( values ) && values.some( Boolean ),
 		not: ( { value } ) => ! value,
 
 		// Strings
-		contains: ( { string, substring } ) => coerceToString( string ).includes( coerceToString( substring ) ),
-		startsWith: ( { string, prefix } ) => coerceToString( string ).startsWith( coerceToString( prefix ) ),
-		endsWith: ( { string, suffix } ) => coerceToString( string ).endsWith( coerceToString( suffix ) ),
+		contains: ( { string, substring } ) =>
+			coerceToString( string ).includes( coerceToString( substring ) ),
+		startsWith: ( { string, prefix } ) =>
+			coerceToString( string ).startsWith( coerceToString( prefix ) ),
+		endsWith: ( { string, suffix } ) =>
+			coerceToString( string ).endsWith( coerceToString( suffix ) ),
 
 		// Validation
 		required: ( { value } ) => {
-			if ( value === null || value === undefined ) return false;
-			if ( typeof value === 'string' ) return value !== '';
-			if ( Array.isArray( value ) ) return value.length > 0;
+			if ( value === null || value === undefined ) {
+				return false;
+			}
+			if ( typeof value === 'string' ) {
+				return value !== '';
+			}
+			if ( Array.isArray( value ) ) {
+				return value.length > 0;
+			}
 			return true;
 		},
 		regex: ( { value, pattern } ) => {
 			try {
-				return new RegExp( coerceToString( pattern ) ).test( coerceToString( value ) );
+				return new RegExp( coerceToString( pattern ) ).test(
+					coerceToString( value )
+				);
 			} catch {
-				throw new Error( `Invalid regular expression: ${ coerceToString( pattern ) }` );
+				throw new Error(
+					`Invalid regular expression: ${ coerceToString( pattern ) }`
+				);
 			}
 		},
 		length: ( { value, min, max } ) => {
-			const length = typeof value === 'string' || Array.isArray( value ) ? value.length : 0;
-			if ( min !== undefined && length < toNumber( min ) ) return false;
-			if ( max !== undefined && length > toNumber( max ) ) return false;
+			const length =
+				typeof value === 'string' || Array.isArray( value )
+					? value.length
+					: 0;
+			if ( min !== undefined && length < toNumber( min ) ) {
+				return false;
+			}
+			if ( max !== undefined && length > toNumber( max ) ) {
+				return false;
+			}
 			return true;
 		},
 		numeric: ( { value, min, max } ) => {
 			const n = toNumber( value );
-			if ( Number.isNaN( n ) ) return false;
-			if ( min !== undefined && n < toNumber( min ) ) return false;
-			if ( max !== undefined && n > toNumber( max ) ) return false;
+			if ( Number.isNaN( n ) ) {
+				return false;
+			}
+			if ( min !== undefined && n < toNumber( min ) ) {
+				return false;
+			}
+			if ( max !== undefined && n > toNumber( max ) ) {
+				return false;
+			}
 			return true;
 		},
-		email: ( { value } ) => /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test( coerceToString( value ) ),
+		email: ( { value } ) =>
+			/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(
+				coerceToString( value )
+			),
 
 		// Formatting
 		formatString: ( { value }, context ) =>
@@ -125,36 +166,50 @@ export function createBasicFunctions( options: BasicFunctionOptions = {} ): Func
 				.join( '' ),
 		formatNumber: ( { value, decimals, grouping } ) => {
 			const n = toNumber( value );
-			if ( Number.isNaN( n ) ) return '';
-			const digits = decimals === undefined ? undefined : toNumber( decimals );
+			if ( Number.isNaN( n ) ) {
+				return '';
+			}
+			const digits =
+				decimals === undefined ? undefined : toNumber( decimals );
 			return new Intl.NumberFormat( locale, {
 				minimumFractionDigits: digits,
 				maximumFractionDigits: digits,
-				useGrouping: grouping === undefined ? true : Boolean( grouping ),
+				useGrouping:
+					grouping === undefined ? true : Boolean( grouping ),
 			} ).format( n );
 		},
 		formatCurrency: ( { value, currency, decimals, grouping } ) => {
 			const n = toNumber( value );
-			if ( Number.isNaN( n ) ) return '';
-			const digits = decimals === undefined ? undefined : toNumber( decimals );
+			if ( Number.isNaN( n ) ) {
+				return '';
+			}
+			const digits =
+				decimals === undefined ? undefined : toNumber( decimals );
 			try {
 				return new Intl.NumberFormat( locale, {
 					style: 'currency',
 					currency: coerceToString( currency ) || 'USD',
 					minimumFractionDigits: digits,
 					maximumFractionDigits: digits,
-					useGrouping: grouping === undefined ? true : Boolean( grouping ),
+					useGrouping:
+						grouping === undefined ? true : Boolean( grouping ),
 				} ).format( n );
 			} catch {
 				return n.toFixed( digits ?? 2 );
 			}
 		},
 		formatDate: ( { value, format } ) => {
-			if ( value === null || value === undefined || value === '' ) return '';
+			if ( value === null || value === undefined || value === '' ) {
+				return '';
+			}
 			const date = new Date( value as string | number );
-			if ( Number.isNaN( date.getTime() ) ) return '';
+			if ( Number.isNaN( date.getTime() ) ) {
+				return '';
+			}
 			const pattern = coerceToString( format );
-			return pattern === 'ISO' || ! pattern ? date.toISOString() : formatDatePattern( date, pattern, locale );
+			return pattern === 'ISO' || ! pattern
+				? date.toISOString()
+				: formatDatePattern( date, pattern, locale );
 		},
 		pluralize: ( args ) => {
 			const n = toNumber( args.value );

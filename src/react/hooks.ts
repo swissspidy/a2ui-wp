@@ -1,6 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
-import type { JsonValue } from '../core/types';
-import type { AccessibilityAttributes, Action, CheckRule } from '../core/types';
+import { useCallback, useMemo, useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
+import type {
+	JsonValue,
+	AccessibilityAttributes,
+	Action,
+	CheckRule,
+} from '../core/types';
 import {
 	isDataBinding,
 	resolveBoolean,
@@ -18,7 +23,10 @@ export function useResolveScope(): ResolveScope {
 	const processor = useProcessor();
 	const surface = useSurface();
 	const scopePath = useScopePath();
-	return useMemo( () => processor.createScope( surface, scopePath ), [ processor, surface, scopePath ] );
+	return useMemo(
+		() => processor.createScope( surface, scopePath ),
+		[ processor, surface, scopePath ]
+	);
 }
 
 export function useDynamicValue( value: unknown ): unknown {
@@ -45,6 +53,8 @@ export function useDynamicStringList( value: unknown ): string[] {
  * Two-way binding for input components. When `value` is a data binding the
  * setter writes to the surface data model; otherwise it falls back to local
  * component state seeded from the (resolved) literal.
+ * @param value  Value to resolve.
+ * @param coerce Converts the resolved value to the type the input works with.
  */
 export function useBoundValue< T extends JsonValue >(
 	value: unknown,
@@ -55,9 +65,13 @@ export function useBoundValue< T extends JsonValue >(
 	const scope = useResolveScope();
 	const bound = isDataBinding( value );
 	const absolutePath = bound ? resolvePath( value.path, scope ) : undefined;
-	const [ local, setLocal ] = useState< T >( () => coerce( resolveDynamicValue( value, scope ) ) );
+	const [ local, setLocal ] = useState< T >( () =>
+		coerce( resolveDynamicValue( value, scope ) )
+	);
 
-	const current = bound ? coerce( surface.dataModel.get( absolutePath ) ) : local;
+	const current = bound
+		? coerce( surface.dataModel.get( absolutePath ) )
+		: local;
 
 	const setValue = useCallback(
 		( next: T ) => {
@@ -78,8 +92,15 @@ export interface CheckResult {
 	messages: string[];
 }
 
-/** Evaluates a component's `checks`. Invalid checks count as failures. */
-export function useChecks( checks: CheckRule[] | undefined, extra: CheckRule[] = [] ): CheckResult {
+/**
+ * Evaluates a component's `checks`. Invalid checks count as failures.
+ * @param checks The component's `checks`.
+ * @param extra  Additional rules, for example one derived from `validationRegexp`.
+ */
+export function useChecks(
+	checks: CheckRule[] | undefined,
+	extra: CheckRule[] = []
+): CheckResult {
 	const scope = useResolveScope();
 	const all = [ ...( Array.isArray( checks ) ? checks : [] ), ...extra ];
 	const messages: string[] = [];
@@ -93,14 +114,21 @@ export function useChecks( checks: CheckRule[] | undefined, extra: CheckRule[] =
 			console.warn( '[a2ui-wp] check failed to evaluate:', error );
 		}
 		if ( ! passed ) {
-			messages.push( rule.message ?? 'Invalid value.' );
+			messages.push( rule.message ?? __( 'Invalid value.', 'a2ui-wp' ) );
 		}
 	}
 	return { valid: messages.length === 0, messages };
 }
 
-/** Returns a callback that dispatches the component's `action`. */
-export function useAction( action: Action | undefined, componentId: string ): () => void {
+/**
+ * Returns a callback that dispatches the component's `action`.
+ * @param action      The component's `action`.
+ * @param componentId Id of the component that owns the action.
+ */
+export function useAction(
+	action: Action | undefined,
+	componentId: string
+): () => void {
 	const processor = useProcessor();
 	const surface = useSurface();
 	const scopePath = useScopePath();
@@ -109,7 +137,12 @@ export function useAction( action: Action | undefined, componentId: string ): ()
 			return;
 		}
 		try {
-			processor.dispatchAction( surface.id, componentId, action, scopePath );
+			processor.dispatchAction(
+				surface.id,
+				componentId,
+				action,
+				scopePath
+			);
 		} catch ( error ) {
 			// eslint-disable-next-line no-console
 			console.error( '[a2ui-wp] action failed:', error );
@@ -117,13 +150,21 @@ export function useAction( action: Action | undefined, componentId: string ): ()
 	}, [ processor, surface, componentId, action, scopePath ] );
 }
 
-export function useAccessibility( attributes: AccessibilityAttributes | undefined ): { label?: string; description?: string } {
+export function useAccessibility(
+	attributes: AccessibilityAttributes | undefined
+): { label?: string; description?: string } {
 	const scope = useResolveScope();
 	if ( ! attributes ) {
 		return {};
 	}
 	return {
-		label: attributes.label === undefined ? undefined : resolveString( attributes.label, scope ),
-		description: attributes.description === undefined ? undefined : resolveString( attributes.description, scope ),
+		label:
+			attributes.label === undefined
+				? undefined
+				: resolveString( attributes.label, scope ),
+		description:
+			attributes.description === undefined
+				? undefined
+				: resolveString( attributes.description, scope ),
 	};
 }

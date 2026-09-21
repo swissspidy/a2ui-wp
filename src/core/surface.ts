@@ -30,26 +30,48 @@ export class Surface {
 		return this.components.get( id );
 	}
 
-	/** Upserts components. Validates every entry before mutating anything. */
+	/**
+	 * Upserts components. Validates every entry before mutating anything.
+	 * @param definitions Components as sent on the wire.
+	 */
 	applyComponents( definitions: ComponentDefinition[] ): void {
 		if ( ! Array.isArray( definitions ) ) {
-			throw new A2UIProtocolError( "'components' must be an array.", this.id, '/updateComponents/components' );
+			throw new A2UIProtocolError(
+				"'components' must be an array.",
+				this.id,
+				'/updateComponents/components'
+			);
 		}
 		definitions.forEach( ( definition, index ) => {
 			if ( ! definition || typeof definition !== 'object' ) {
-				throw new A2UIProtocolError( `Component at index ${ index } is not an object.`, this.id, `/updateComponents/components/${ index }` );
+				throw new A2UIProtocolError(
+					`Component at index ${ index } is not an object.`,
+					this.id,
+					`/updateComponents/components/${ index }`
+				);
 			}
 			if ( typeof definition.id !== 'string' || definition.id === '' ) {
-				throw new A2UIProtocolError( `Component at index ${ index } is missing an 'id'.`, this.id, `/updateComponents/components/${ index }/id` );
+				throw new A2UIProtocolError(
+					`Component at index ${ index } is missing an 'id'.`,
+					this.id,
+					`/updateComponents/components/${ index }/id`
+				);
 			}
 			const existing = this.components.get( definition.id );
 			if ( typeof definition.component !== 'string' && ! existing ) {
-				throw new A2UIProtocolError( `Component '${ definition.id }' is missing a 'component' type.`, this.id, `/updateComponents/components/${ index }/component` );
+				throw new A2UIProtocolError(
+					`Component '${ definition.id }' is missing a 'component' type.`,
+					this.id,
+					`/updateComponents/components/${ index }/component`
+				);
 			}
 		} );
 		for ( const definition of definitions ) {
 			const existing = this.components.get( definition.id );
-			const component = typeof definition.component === 'string' ? definition.component : existing!.component;
+			const component =
+				typeof definition.component === 'string'
+					? definition.component
+					: existing!.component;
 			this.components.set( definition.id, { ...definition, component } );
 		}
 	}

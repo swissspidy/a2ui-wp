@@ -1,0 +1,56 @@
+name: E2E Tests
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+    e2e-tests:
+        name: E2E Tests
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Setup Node
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            # No --with-deps: every library Chromium needs is already on the
+            # runner image, and the extra font packages that flag pulls in
+            # buy nothing here.
+            - name: Install Playwright browsers
+              timeout-minutes: 5
+              run: npx playwright install chromium
+
+            - name: Build plugin
+              run: npm run build
+
+            - name: Start WordPress
+              run: npm run wp-env start
+
+            - name: Run tests
+              run: npm run test:e2e
+
+            - name: Archive debug artifacts (screenshots, HTML snapshots)
+              uses: actions/upload-artifact@v7
+              if: always()
+              with:
+                  name: failures-artifacts
+                  path: artifacts
+                  if-no-files-found: ignore

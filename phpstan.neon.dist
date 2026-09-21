@@ -1,0 +1,14 @@
+parameters:
+	level: 10
+	paths:
+		- a2ui-wp.php
+		- inc/
+	scanFiles:
+		- vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+	stubFiles:
+		- tests/phpstan/stubs.php
+	bootstrapFiles:
+		- tests/phpstan/bootstrap.php
+	treatPhpDocTypesAsCertain: false
+	WPCompat:
+		pluginFile: a2ui-wp.php

@@ -27,7 +27,9 @@ class Scanner {
 		return this.pos >= this.input.length;
 	}
 	peek( offset = 0 ) {
-		return this.pos + offset < this.input.length ? this.input[ this.pos + offset ] : '\0';
+		return this.pos + offset < this.input.length
+			? this.input[ this.pos + offset ]
+			: '\0';
 	}
 	advance( count = 1 ) {
 		const slice = this.input.slice( this.pos, this.pos + count );
@@ -45,7 +47,10 @@ class Scanner {
 		return false;
 	}
 	matchKeyword( keyword: string ) {
-		if ( this.startsWith( keyword ) && ! /[A-Za-z0-9_]/.test( this.peek( keyword.length ) ) ) {
+		if (
+			this.startsWith( keyword ) &&
+			! /[A-Za-z0-9_]/.test( this.peek( keyword.length ) )
+		) {
 			this.pos += keyword.length;
 			return true;
 		}
@@ -61,10 +66,16 @@ class Scanner {
 const isAlnum = ( c: string ) => /[A-Za-z0-9]/.test( c );
 const isDigit = ( c: string ) => c >= '0' && c <= '9';
 
-/** Splits a template into literal strings and dynamic parts. */
+/**
+ * Splits a template into literal strings and dynamic parts.
+ * @param input Template string.
+ * @param depth Current nesting depth.
+ */
 export function parseTemplate( input: string, depth = 0 ): DynamicValue[] {
 	if ( depth > MAX_DEPTH ) {
-		throw new ExpressionError( 'Maximum expression nesting depth exceeded.' );
+		throw new ExpressionError(
+			'Maximum expression nesting depth exceeded.'
+		);
 	}
 	if ( ! input || ! input.includes( '${' ) ) {
 		return input ? [ input ] : [];
@@ -82,7 +93,11 @@ export function parseTemplate( input: string, depth = 0 ): DynamicValue[] {
 			parts.push( '${' );
 		} else {
 			const start = scanner.pos;
-			while ( ! scanner.isAtEnd() && ! scanner.startsWith( '${' ) && ! scanner.startsWith( '\\${' ) ) {
+			while (
+				! scanner.isAtEnd() &&
+				! scanner.startsWith( '${' ) &&
+				! scanner.startsWith( '\\${' )
+			) {
 				scanner.advance();
 			}
 			parts.push( scanner.input.slice( start, scanner.pos ) );
@@ -117,7 +132,11 @@ function extractInterpolation( scanner: Scanner ): string {
 	return scanner.input.slice( start, scanner.pos - 1 );
 }
 
-/** Parses a single expression (the inside of `${...}`). */
+/**
+ * Parses a single expression (the inside of `${...}`).
+ * @param expression Expression text, without the surrounding `${` and `}`.
+ * @param depth      Current nesting depth.
+ */
 export function parseExpression( expression: string, depth = 0 ): DynamicValue {
 	const trimmed = expression.trim();
 	if ( ! trimmed ) {
@@ -127,14 +146,18 @@ export function parseExpression( expression: string, depth = 0 ): DynamicValue {
 	const result = parseInternal( scanner, depth );
 	scanner.skipWhitespace();
 	if ( ! scanner.isAtEnd() ) {
-		throw new ExpressionError( `Unexpected characters at end of expression: '${ scanner.input.slice( scanner.pos ) }'.` );
+		throw new ExpressionError(
+			`Unexpected characters at end of expression: '${ scanner.input.slice( scanner.pos ) }'.`
+		);
 	}
 	return result;
 }
 
 function parseInternal( scanner: Scanner, depth: number ): DynamicValue {
 	if ( depth > MAX_DEPTH ) {
-		throw new ExpressionError( 'Maximum expression nesting depth exceeded.' );
+		throw new ExpressionError(
+			'Maximum expression nesting depth exceeded.'
+		);
 	}
 	scanner.skipWhitespace();
 	if ( scanner.isAtEnd() ) {
@@ -161,7 +184,10 @@ function parseInternal( scanner: Scanner, depth: number ): DynamicValue {
 	}
 
 	const start = scanner.pos;
-	while ( ! scanner.isAtEnd() && ( isAlnum( scanner.peek() ) || '/._-'.includes( scanner.peek() ) ) ) {
+	while (
+		! scanner.isAtEnd() &&
+		( isAlnum( scanner.peek() ) || '/._-'.includes( scanner.peek() ) )
+	) {
 		scanner.advance();
 	}
 	const token = scanner.input.slice( start, scanner.pos );
@@ -172,19 +198,28 @@ function parseInternal( scanner: Scanner, depth: number ): DynamicValue {
 	return token ? { path: token } : '';
 }
 
-function parseFunctionCall( name: string, scanner: Scanner, depth: number ): FunctionCall {
+function parseFunctionCall(
+	name: string,
+	scanner: Scanner,
+	depth: number
+): FunctionCall {
 	scanner.match( '(' );
 	scanner.skipWhitespace();
 	const args: Record< string, DynamicValue > = {};
 	while ( ! scanner.isAtEnd() && scanner.peek() !== ')' ) {
 		const start = scanner.pos;
-		while ( ! scanner.isAtEnd() && ( isAlnum( scanner.peek() ) || scanner.peek() === '_' ) ) {
+		while (
+			! scanner.isAtEnd() &&
+			( isAlnum( scanner.peek() ) || scanner.peek() === '_' )
+		) {
 			scanner.advance();
 		}
 		const argName = scanner.input.slice( start, scanner.pos );
 		scanner.skipWhitespace();
 		if ( ! scanner.match( ':' ) ) {
-			throw new ExpressionError( `Expected ':' after argument '${ argName }' in '${ name }()'.` );
+			throw new ExpressionError(
+				`Expected ':' after argument '${ argName }' in '${ name }()'.`
+			);
 		}
 		args[ argName ] = parseInternal( scanner, depth + 1 );
 		scanner.skipWhitespace();
@@ -199,6 +234,8 @@ function parseFunctionCall( name: string, scanner: Scanner, depth: number ): Fun
 	return { call: name, args, returnType: 'any' };
 }
 
+const ESCAPES: Record< string, string > = { n: '\n', t: '\t', r: '\r' };
+
 function parseStringLiteral( scanner: Scanner ): string {
 	const quote = scanner.advance();
 	let result = '';
@@ -206,7 +243,7 @@ function parseStringLiteral( scanner: Scanner ): string {
 		const c = scanner.advance();
 		if ( c === '\\' ) {
 			const next = scanner.advance();
-			result += next === 'n' ? '\n' : next === 't' ? '\t' : next === 'r' ? '\r' : next;
+			result += ESCAPES[ next ] ?? next;
 		} else if ( c === quote ) {
 			return result;
 		} else {
@@ -218,7 +255,10 @@ function parseStringLiteral( scanner: Scanner ): string {
 
 function parseNumberLiteral( scanner: Scanner ): number {
 	const start = scanner.pos;
-	while ( ! scanner.isAtEnd() && ( isDigit( scanner.peek() ) || scanner.peek() === '.' ) ) {
+	while (
+		! scanner.isAtEnd() &&
+		( isDigit( scanner.peek() ) || scanner.peek() === '.' )
+	) {
 		scanner.advance();
 	}
 	const text = scanner.input.slice( start, scanner.pos );

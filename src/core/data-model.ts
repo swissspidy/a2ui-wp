@@ -23,7 +23,11 @@ export class DataModel {
 		return getAtPointer( this.data, path );
 	}
 
-	/** Replaces (or, with `undefined`, removes) the value at `path`. */
+	/**
+	 * Replaces (or, with `undefined`, removes) the value at `path`.
+	 * @param path  JSON Pointer.
+	 * @param value New value, or `undefined` to remove the key.
+	 */
 	set( path: string, value: JsonValue | undefined ): void {
 		const normalized = path === '' ? '/' : path;
 		if ( normalized === '/' ) {

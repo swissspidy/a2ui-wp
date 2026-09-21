@@ -1,0 +1,156 @@
+{
+	"name": "Live updates (stream)",
+	"description": "Step through this one with “Next message”: components arrive before the root, the data model is patched at paths, a component is redefined, and finally the surface is deleted.",
+	"messages": [
+		{
+			"version": "v0.9.1",
+			"createSurface": {
+				"surfaceId": "deploy",
+				"catalogId": "https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json",
+				"theme": { "primaryColor": "#008a20" }
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateComponents": {
+				"surfaceId": "deploy",
+				"components": [
+					{
+						"id": "status",
+						"component": "Text",
+						"variant": "h3",
+						"text": {
+							"call": "formatString",
+							"args": {
+								"value": "Deploying ${/site} — ${/progress}%"
+							},
+							"returnType": "string"
+						}
+					}
+				]
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "deploy",
+				"value": {
+					"site": "example.com",
+					"progress": 0,
+					"step": "Preparing"
+				}
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateComponents": {
+				"surfaceId": "deploy",
+				"components": [
+					{ "id": "root", "component": "Card", "child": "layout" },
+					{
+						"id": "layout",
+						"component": "Column",
+						"children": [ "status", "step", "progress" ]
+					},
+					{
+						"id": "step",
+						"component": "Text",
+						"variant": "caption",
+						"text": { "path": "/step" }
+					},
+					{
+						"id": "progress",
+						"component": "Slider",
+						"label": "Progress",
+						"min": 0,
+						"max": 100,
+						"value": { "path": "/progress" }
+					}
+				]
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "deploy",
+				"path": "/progress",
+				"value": 35
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "deploy",
+				"path": "/step",
+				"value": "Uploading files"
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "deploy",
+				"path": "/progress",
+				"value": 80
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "deploy",
+				"path": "/step",
+				"value": "Warming caches"
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateDataModel": {
+				"surfaceId": "deploy",
+				"path": "/progress",
+				"value": 100
+			}
+		},
+		{
+			"version": "v0.9.1",
+			"updateComponents": {
+				"surfaceId": "deploy",
+				"components": [
+					{
+						"id": "layout",
+						"component": "Column",
+						"children": [ "status", "done-row" ]
+					},
+					{
+						"id": "done-row",
+						"component": "Row",
+						"align": "center",
+						"children": [ "done-icon", "done-text", "view-button" ]
+					},
+					{ "id": "done-icon", "component": "Icon", "name": "check" },
+					{
+						"id": "done-text",
+						"component": "Text",
+						"text": "Deployed successfully."
+					},
+					{
+						"id": "view-label",
+						"component": "Text",
+						"text": "View site"
+					},
+					{
+						"id": "view-button",
+						"component": "Button",
+						"variant": "primary",
+						"child": "view-label",
+						"action": {
+							"event": {
+								"name": "view_site",
+								"context": { "site": { "path": "/site" } }
+							}
+						}
+					}
+				]
+			}
+		},
+		{ "version": "v0.9.1", "deleteSurface": { "surfaceId": "deploy" } }
+	]
+}
