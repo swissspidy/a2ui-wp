@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { A2UIProcessor } from '../../src/core/processor';
 import { A2UIRenderer } from '../../src/react/renderer';

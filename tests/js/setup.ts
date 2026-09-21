@@ -21,3 +21,21 @@ if ( typeof window !== 'undefined' ) {
 		} as unknown as typeof ResizeObserver;
 	}
 }
+
+// Vitest globals are disabled, so Testing Library cannot register its
+// cleanup automatically.
+import { afterAll, afterEach, beforeAll } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+let previousIsReactActEnvironment: unknown;
+
+beforeAll( () => {
+	previousIsReactActEnvironment = globalThis.IS_REACT_ACT_ENVIRONMENT;
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+} );
+
+afterAll( () => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = previousIsReactActEnvironment;
+} );
+
+afterEach( cleanup );

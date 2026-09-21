@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { parseTemplate } from '../../src/core/expression-parser';
 
 describe( 'parseTemplate', () => {

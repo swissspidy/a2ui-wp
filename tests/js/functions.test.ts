@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { DataModel } from '../../src/core/data-model';
 import { createBasicFunctions } from '../../src/core/functions';
 import {

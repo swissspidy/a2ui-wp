@@ -14,7 +14,7 @@
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"types": [ "node", "jest" ]
+		"types": [ "node" ]
 	},
 	"include": [ "src/**/*", "tests/js/**/*", "tests/e2e/**/*" ]
 }

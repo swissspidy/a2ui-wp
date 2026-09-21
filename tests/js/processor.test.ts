@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import { A2UIProcessor } from '../../src/core/processor';
 import type { ActionMessage } from '../../src/core/types';
 
@@ -12,7 +13,7 @@ const create = ( surfaceId = 's1' ) => ( {
 describe( 'A2UIProcessor', () => {
 	it( 'creates, updates and deletes surfaces while notifying subscribers', () => {
 		const processor = new A2UIProcessor();
-		const listener = jest.fn();
+		const listener = vi.fn();
 		processor.subscribe( listener );
 
 		processor.processMessage( create() );
@@ -173,7 +174,7 @@ describe( 'A2UIProcessor', () => {
 	} );
 
 	it( 'runs local function-call actions', () => {
-		const openUrl = jest.fn();
+		const openUrl = vi.fn();
 		const processor = new A2UIProcessor( { openUrl } );
 		processor.processMessage( create() );
 		processor.processMessage( {
