@@ -41,7 +41,7 @@
 		<exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
 	</rule>
 
-	<config name="minimum_wp_version" value="6.8" />
+	<config name="minimum_wp_version" value="7.1" />
 	<rule ref="WordPress.WP.DeprecatedFunctions" />
 
 	<arg name="extensions" value="php"/>

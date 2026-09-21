@@ -83,7 +83,7 @@ jobs:
                         "version": "0.1.$CURRENT_DATE-${GITHUB_SHA::7}",
                         "url": "https://github.com/swissspidy/a2ui-wp",
                         "package": "https://swissspidy.github.io/a2ui-wp/nightly.zip",
-                        "tested": "6.8",
+                        "tested": "7.1",
                         "requires_php": "8.0",
                         "autoupdate": true
                     }
