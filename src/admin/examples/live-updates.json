@@ -1,13 +1,15 @@
 {
 	"name": "Live updates (stream)",
-	"description": "Step through this one with “Next message”: components arrive before the root, the data model is patched at paths, a component is redefined, and finally the surface is deleted.",
+	"description": "Step through this one with “Next message”: components arrive before the root, the data model is patched at paths, and a component is redefined at the end. “Render all” jumps straight to the finished state.",
 	"messages": [
 		{
 			"version": "v0.9.1",
 			"createSurface": {
 				"surfaceId": "deploy",
 				"catalogId": "https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json",
-				"theme": { "primaryColor": "#008a20" }
+				"theme": {
+					"primaryColor": "#008a20"
+				}
 			}
 		},
 		{
@@ -46,7 +48,11 @@
 			"updateComponents": {
 				"surfaceId": "deploy",
 				"components": [
-					{ "id": "root", "component": "Card", "child": "layout" },
+					{
+						"id": "root",
+						"component": "Card",
+						"child": "layout"
+					},
 					{
 						"id": "layout",
 						"component": "Column",
@@ -56,7 +62,9 @@
 						"id": "step",
 						"component": "Text",
 						"variant": "caption",
-						"text": { "path": "/step" }
+						"text": {
+							"path": "/step"
+						}
 					},
 					{
 						"id": "progress",
@@ -64,7 +72,9 @@
 						"label": "Progress",
 						"min": 0,
 						"max": 100,
-						"value": { "path": "/progress" }
+						"value": {
+							"path": "/progress"
+						}
 					}
 				]
 			}
@@ -125,7 +135,11 @@
 						"align": "center",
 						"children": [ "done-icon", "done-text", "view-button" ]
 					},
-					{ "id": "done-icon", "component": "Icon", "name": "check" },
+					{
+						"id": "done-icon",
+						"component": "Icon",
+						"name": "check"
+					},
 					{
 						"id": "done-text",
 						"component": "Text",
@@ -144,13 +158,16 @@
 						"action": {
 							"event": {
 								"name": "view_site",
-								"context": { "site": { "path": "/site" } }
+								"context": {
+									"site": {
+										"path": "/site"
+									}
+								}
 							}
 						}
 					}
 				]
 			}
-		},
-		{ "version": "v0.9.1", "deleteSurface": { "surfaceId": "deploy" } }
+		}
 	]
 }

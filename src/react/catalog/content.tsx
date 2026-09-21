@@ -45,7 +45,13 @@ export function Text( { props }: A2UIComponentProps< TextProps > ) {
 		);
 	}
 	return (
-		<WPText className="a2ui-wp-text" style={ { whiteSpace: 'pre-wrap' } }>
+		<WPText
+			className="a2ui-wp-text"
+			// Inherit rather than the component's own dark default, so text
+			// inside a primary Button takes the button's color.
+			color="inherit"
+			style={ { whiteSpace: 'pre-wrap' } }
+		>
 			{ text }
 		</WPText>
 	);
