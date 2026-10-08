@@ -53,5 +53,8 @@
 		"test:unit": "vitest run",
 		"test:unit:watch": "vitest",
 		"test:e2e": "wp-scripts test-playwright --config tests/e2e/playwright.config.ts"
+	},
+	"dependencies": {
+		"@a2ui/web_core": "^0.12.0"
 	}
 }

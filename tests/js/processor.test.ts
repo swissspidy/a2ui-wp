@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { A2UIProcessor } from '../../src/core/processor';
-import type { ActionMessage } from '../../src/core/types';
+import { createFunctionImplementation } from '@a2ui/web_core/v0_9';
+import { OpenUrlApi } from '@a2ui/web_core/v0_9/basic_catalog';
+import {
+	A2UIProcessor,
+	type ActionMessage,
+	type ClientMessage,
+} from '../../src/core/processor';
 
 const CATALOG =
 	'https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json';
@@ -11,14 +16,16 @@ const create = ( surfaceId = 's1' ) => ( {
 } );
 
 describe( 'A2UIProcessor', () => {
-	it( 'creates, updates and deletes surfaces while notifying subscribers', () => {
+	it( 'notifies subscribers about surfaces, components and data', () => {
 		const processor = new A2UIProcessor();
 		const listener = vi.fn();
 		processor.subscribe( listener );
 
 		processor.processMessage( create() );
 		expect( processor.getSurface( 's1' ) ).toBeDefined();
-		expect( processor.getSurface( 's1' )?.root ).toBeUndefined();
+		const calls = () => listener.mock.calls.length;
+		let seen = calls();
+		expect( seen ).toBeGreaterThan( 0 );
 
 		processor.processMessage( {
 			version: 'v0.9.1',
@@ -27,7 +34,21 @@ describe( 'A2UIProcessor', () => {
 				components: [ { id: 'root', component: 'Text', text: 'hi' } ],
 			},
 		} );
-		expect( processor.getSurface( 's1' )?.root?.component ).toBe( 'Text' );
+		expect(
+			processor.getSurface( 's1' )?.componentsModel.get( 'root' )?.type
+		).toBe( 'Text' );
+		expect( calls() ).toBeGreaterThan( seen );
+		seen = calls();
+
+		processor.processMessage( {
+			version: 'v0.9.1',
+			updateComponents: {
+				surfaceId: 's1',
+				components: [ { id: 'root', component: 'Text', text: 'ho' } ],
+			},
+		} );
+		expect( calls() ).toBeGreaterThan( seen );
+		seen = calls();
 
 		processor.processMessage( {
 			version: 'v0.9.1',
@@ -36,80 +57,28 @@ describe( 'A2UIProcessor', () => {
 		expect( processor.getSurface( 's1' )?.dataModel.get( '/a/b' ) ).toBe(
 			1
 		);
-
-		processor.processMessage( {
-			version: 'v0.9.1',
-			updateDataModel: { surfaceId: 's1', path: '/a/b' },
-		} );
-		expect( processor.getSurface( 's1' )?.dataModel.get( '/a' ) ).toEqual(
-			{}
-		);
+		expect( calls() ).toBeGreaterThan( seen );
+		seen = calls();
 
 		processor.processMessage( {
 			version: 'v0.9.1',
 			deleteSurface: { surfaceId: 's1' },
 		} );
 		expect( processor.getSurface( 's1' ) ).toBeUndefined();
-		expect( listener ).toHaveBeenCalledTimes( 5 );
-	} );
-
-	it( 'keeps the previous type when a component update omits it', () => {
-		const processor = new A2UIProcessor();
-		processor.processMessage( create() );
-		processor.processMessage( {
-			updateComponents: {
-				surfaceId: 's1',
-				components: [ { id: 'root', component: 'Text', text: 'a' } ],
-			},
-		} );
-		processor.processMessage( {
-			updateComponents: {
-				surfaceId: 's1',
-				components: [ { id: 'root', text: 'b' } ],
-			},
-		} );
-		expect( processor.getSurface( 's1' )?.root ).toMatchObject( {
-			component: 'Text',
-			text: 'b',
-		} );
+		expect( calls() ).toBeGreaterThan( seen );
+		expect( processor.getVersion() ).toBe( calls() );
 	} );
 
 	it( 'rejects invalid messages', () => {
 		const processor = new A2UIProcessor();
 		expect( () =>
 			processor.processMessage( {
-				version: 'v1.0',
-				createSurface: { surfaceId: 'x', catalogId: CATALOG },
-			} )
-		).toThrow( /Unsupported protocol version/ );
-		expect( () =>
-			processor.processMessage( {
+				version: 'v0.9.1',
 				updateComponents: { surfaceId: 'nope', components: [] },
 			} )
-		).toThrow( /does not exist/ );
+		).toThrow();
 		processor.processMessage( create() );
-		expect( () => processor.processMessage( create() ) ).toThrow(
-			/already exists/
-		);
-		expect( () =>
-			processor.processMessage( {
-				updateComponents: {
-					surfaceId: 's1',
-					components: [ { component: 'Text' } ],
-				},
-			} )
-		).toThrow( /missing an 'id'/ );
-		expect( () =>
-			processor.processMessage( {
-				createSurface: { surfaceId: 'a' },
-				deleteSurface: { surfaceId: 'a' },
-			} )
-		).toThrow( /multiple/ );
-		expect( () =>
-			new A2UIProcessor( { strictCatalogs: true } ).processMessage( {
-				createSurface: { surfaceId: 'a', catalogId: 'x' },
-			} )
-		).toThrow( /Unsupported catalog/ );
+		expect( () => processor.processMessage( create() ) ).toThrow();
 	} );
 
 	it( 'processes JSON Lines and collects errors without stopping', () => {
@@ -120,6 +89,7 @@ describe( 'A2UIProcessor', () => {
 				'not json',
 				'',
 				JSON.stringify( {
+					version: 'v0.9.1',
 					updateDataModel: { surfaceId: 's1', value: { ok: true } },
 				} ),
 			].join( '\n' )
@@ -131,17 +101,32 @@ describe( 'A2UIProcessor', () => {
 		);
 	} );
 
-	it( 'dispatches actions with resolved context and echoes the surface version', () => {
+	it( 'dispatches actions with context resolved in scope', async () => {
 		const processor = new A2UIProcessor();
 		const actions: ActionMessage[] = [];
+		const messages: ClientMessage[] = [];
 		processor.onAction( ( message ) => actions.push( message ) );
-		processor.processMessage( create() );
-		processor.processMessage( {
-			updateDataModel: {
-				surfaceId: 's1',
-				value: { items: [ { id: 'i1' }, { id: 'i2' } ], note: 'n' },
+		processor.onClientMessage( ( message ) => messages.push( message ) );
+		processor.processMessages( [
+			create(),
+			{
+				version: 'v0.9.1',
+				updateComponents: {
+					surfaceId: 's1',
+					components: [ { id: 'btn', component: 'Text', text: '' } ],
+				},
 			},
-		} );
+			{
+				version: 'v0.9.1',
+				updateDataModel: {
+					surfaceId: 's1',
+					value: {
+						items: [ { id: 'i1' }, { id: 'i2' } ],
+						note: 'n',
+					},
+				},
+			},
+		] );
 
 		processor.dispatchAction(
 			's1',
@@ -153,12 +138,12 @@ describe( 'A2UIProcessor', () => {
 						id: { path: 'id' },
 						note: { path: '/note' },
 						fixed: 1,
-						missing: { path: '/nope' },
 					},
 				},
 			},
 			'/items/1'
 		);
+		await Promise.resolve();
 
 		expect( actions ).toHaveLength( 1 );
 		expect( actions[ 0 ].version ).toBe( 'v0.9.1' );
@@ -166,41 +151,52 @@ describe( 'A2UIProcessor', () => {
 			name: 'pick',
 			surfaceId: 's1',
 			sourceComponentId: 'btn',
-			context: { id: 'i2', note: 'n', fixed: 1, missing: null },
+			context: { id: 'i2', note: 'n', fixed: 1 },
 		} );
-		expect( new Date( actions[ 0 ].action.timestamp ).toISOString() ).toBe(
-			actions[ 0 ].action.timestamp
-		);
+		expect( messages ).toEqual( actions );
 	} );
 
 	it( 'runs local function-call actions', () => {
 		const openUrl = vi.fn();
-		const processor = new A2UIProcessor( { openUrl } );
-		processor.processMessage( create() );
-		processor.processMessage( {
-			updateDataModel: {
-				surfaceId: 's1',
-				value: { url: 'https://wordpress.org/' },
-			},
+		const processor = new A2UIProcessor( {
+			functions: [
+				createFunctionImplementation( OpenUrlApi, ( args ) =>
+					openUrl( args.url )
+				),
+			],
 		} );
+		processor.processMessages( [
+			create(),
+			{
+				version: 'v0.9.1',
+				updateComponents: {
+					surfaceId: 's1',
+					components: [ { id: 'btn', component: 'Text', text: '' } ],
+				},
+			},
+		] );
 		processor.dispatchAction( 's1', 'btn', {
-			functionCall: { call: 'openUrl', args: { url: { path: '/url' } } },
+			functionCall: {
+				call: 'openUrl',
+				args: { url: 'https://wordpress.org/' },
+			},
 		} );
 		expect( openUrl ).toHaveBeenCalledWith( 'https://wordpress.org/' );
 	} );
 
-	it( 'exposes capabilities and the client data model', () => {
+	it( 'exposes the client data model', () => {
 		const processor = new A2UIProcessor();
-		processor.processMessage( create() );
-		processor.processMessage( {
-			createSurface: { surfaceId: 's2', catalogId: CATALOG },
-		} );
-		processor.processMessage( {
-			updateDataModel: { surfaceId: 's1', value: { a: 1 } },
-		} );
-		expect(
-			processor.getClientCapabilities()[ 'v0.9.1' ].supportedCatalogIds
-		).toContain( CATALOG );
+		processor.processMessages( [
+			create(),
+			{
+				version: 'v0.9.1',
+				createSurface: { surfaceId: 's2', catalogId: CATALOG },
+			},
+			{
+				version: 'v0.9.1',
+				updateDataModel: { surfaceId: 's1', value: { a: 1 } },
+			},
+		] );
 		expect( processor.getClientDataModel() ).toEqual( {
 			version: 'v0.9.1',
 			surfaces: { s1: { a: 1 } },

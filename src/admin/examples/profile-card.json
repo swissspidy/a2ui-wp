@@ -90,7 +90,7 @@
 						"action": {
 							"functionCall": {
 								"call": "openUrl",
-								"args": { "url": { "path": "/user/website" } }
+								"args": { "url": "https://wordpress.org/" }
 							}
 						}
 					},
@@ -128,8 +128,7 @@
 						"lastName": "Wordsworth",
 						"role": "Editor · Example Magazine",
 						"bio": "Writes about open publishing, block themes and the open web.",
-						"avatar": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=96",
-						"website": "https://wordpress.org/"
+						"avatar": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&s=96"
 					}
 				}
 			}

@@ -10,7 +10,7 @@ Run `npm install` and `npm run build` to build the JavaScript and CSS.
 
 ### Running the tests
 
-- `npm run test:unit` runs the JavaScript unit tests for the protocol core and the renderer.
+- `npm run test:unit` runs the JavaScript unit tests for the processor wrapper, the example streams and the renderer.
 - `composer lint` and `composer phpstan` check the PHP.
 
 `npm run wp-env start` brings up WordPress with the plugin. With that running:
