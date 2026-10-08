@@ -1,36 +1,32 @@
 /**
- * The A2UI message processor: consumes server → client messages, maintains
- * surfaces, and produces client → server `action` messages.
+ * A thin wrapper around the reference A2UI implementation
+ * (`@a2ui/web_core`). The protocol itself (message processing, surfaces,
+ * the data model, data binding, expressions and the basic catalog
+ * functions) is upstream's; this class only adds what the React layer and
+ * the playground need on top:
  *
- * It is framework agnostic. UI layers subscribe with `subscribe()` and read
- * `getVersion()` (a monotonically increasing change counter), which makes it
- * a drop-in external store for React's `useSyncExternalStore`.
+ * - a change counter for React's `useSyncExternalStore`,
+ * - outgoing `action` and `error` messages wrapped in their envelope,
+ * - JSON Lines input that keeps going past bad lines.
  */
 
-import { A2UIProtocolError } from './errors';
 import {
-	createBasicFunctions,
-	type BasicFunctionOptions,
-	type FunctionRegistry,
-} from './functions';
-import { resolveDynamicValue, type ResolveScope } from './resolver';
-import { Surface } from './surface';
-import type {
-	Action,
-	ActionMessage,
-	ClientCapabilities,
-	ClientDataModel,
-	ClientMessage,
-	ComponentId,
-	CreateSurfacePayload,
-	DeleteSurfacePayload,
-	ErrorMessage,
-	JsonObject,
-	JsonValue,
-	ServerMessage,
-	UpdateComponentsPayload,
-	UpdateDataModelPayload,
-} from './types';
+	Catalog,
+	ComponentContext,
+	DataContext,
+	MessageProcessor,
+	type A2uiClientAction,
+	type A2uiClientMessage,
+	type A2uiVersionCapabilities,
+	type Action,
+	type ComponentApi,
+	type FunctionImplementation,
+	type SurfaceModel,
+} from '@a2ui/web_core/v0_9';
+import {
+	BASIC_COMPONENTS,
+	createBasicCatalogFunctions,
+} from '@a2ui/web_core/v0_9/basic_catalog';
 
 export const BASIC_CATALOG_IDS = [
 	'https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json',
@@ -39,47 +35,73 @@ export const BASIC_CATALOG_IDS = [
 
 export const DEFAULT_PROTOCOL_VERSION = 'v0.9.1';
 
-export interface ProcessorOptions extends BasicFunctionOptions {
-	/** Extra or overriding client-side functions. */
-	functions?: FunctionRegistry;
-	/** Catalog ids this client advertises and accepts. Defaults to the basic catalog. */
-	supportedCatalogIds?: string[];
-	/** When true, `createSurface` with an unknown catalog id is rejected. */
-	strictCatalogs?: boolean;
+export type Surface = SurfaceModel< ComponentApi >;
+export type ActionMessage = { version: string; action: A2uiClientAction };
+export type ClientMessage = A2uiClientMessage;
+
+export interface ProcessorOptions {
+	/** Locale for the formatting functions. Defaults to the runtime's. */
+	locale?: string;
+	/** Extra client-side functions, or replacements for basic ones by name. */
+	functions?: FunctionImplementation[];
+	/** Catalogs this client accepts. Defaults to the basic catalog. */
+	catalogs?: Catalog< ComponentApi >[];
 }
 
-export type ActionListener = (
-	message: ActionMessage,
-	surface: Surface
-) => void;
+export type ActionListener = ( message: ActionMessage ) => void;
 export type ClientMessageListener = ( message: ClientMessage ) => void;
 export type ChangeListener = () => void;
 
-const SUPPORTED_VERSION_PREFIX = 'v0.9';
+/**
+ * Builds the basic catalog under every id it is published as.
+ * @param options Locale and extra functions.
+ */
+export function createBasicCatalogs(
+	options: Pick< ProcessorOptions, 'locale' | 'functions' > = {}
+): Catalog< ComponentApi >[] {
+	const functions = new Map(
+		[
+			...createBasicCatalogFunctions( { locale: options.locale } ),
+			...( options.functions ?? [] ),
+		].map( ( fn ) => [ fn.name, fn ] )
+	);
+	return BASIC_CATALOG_IDS.map(
+		( id ) =>
+			new Catalog( id, 'v0.9', BASIC_COMPONENTS, [
+				...functions.values(),
+			] )
+	);
+}
 
 export class A2UIProcessor {
-	readonly surfaces = new Map< string, Surface >();
-	readonly functions: FunctionRegistry;
-	readonly supportedCatalogIds: string[];
-	readonly locale?: string;
+	readonly inner: MessageProcessor< ComponentApi >;
 
-	private readonly strictCatalogs: boolean;
 	private version = 0;
 	private readonly changeListeners = new Set< ChangeListener >();
 	private readonly actionListeners = new Set< ActionListener >();
 	private readonly clientMessageListeners =
 		new Set< ClientMessageListener >();
-	private readonly dataModelUnsubscribers = new Map< string, () => void >();
+	private readonly surfaceUnsubscribers = new Map<
+		string,
+		Array< () => void >
+	>();
 
 	constructor( options: ProcessorOptions = {} ) {
-		this.functions = {
-			...createBasicFunctions( options ),
-			...( options.functions ?? {} ),
-		};
-		this.supportedCatalogIds =
-			options.supportedCatalogIds ?? BASIC_CATALOG_IDS;
-		this.strictCatalogs = options.strictCatalogs ?? false;
-		this.locale = options.locale;
+		this.inner = new MessageProcessor(
+			options.catalogs ?? createBasicCatalogs( options ),
+			( action ) => this.emitAction( action as A2uiClientAction )
+		);
+		this.inner.onSurfaceCreated( ( surface ) => {
+			this.watchSurface( surface );
+			this.notify();
+		} );
+		this.inner.onSurfaceDeleted( ( surfaceId ) => {
+			this.surfaceUnsubscribers
+				.get( surfaceId )
+				?.forEach( ( unsubscribe ) => unsubscribe() );
+			this.surfaceUnsubscribers.delete( surfaceId );
+			this.notify();
+		} );
 	}
 
 	// -- Change notification --------------------------------------------------
@@ -100,6 +122,50 @@ export class A2UIProcessor {
 		for ( const listener of this.changeListeners ) {
 			listener();
 		}
+	}
+
+	private watchSurface( surface: Surface ) {
+		const notify = () => this.notify();
+		const components = surface.componentsModel;
+		const componentSubscriptions = new Map< string, () => void >();
+		const watchComponent = ( id: string ) => {
+			const model = components.get( id );
+			if ( model ) {
+				const subscription = model.onUpdated.subscribe( notify );
+				componentSubscriptions.set( id, () =>
+					subscription.unsubscribe()
+				);
+			}
+		};
+		for ( const id of components.keys ) {
+			watchComponent( id );
+		}
+		const subscriptions = [
+			surface.dataModel.subscribe( '/', notify ),
+			components.onCreated.subscribe( ( model ) => {
+				watchComponent( model.id );
+				notify();
+			} ),
+			components.onDeleted.subscribe( ( id ) => {
+				componentSubscriptions.get( id )?.();
+				componentSubscriptions.delete( id );
+				notify();
+			} ),
+			surface.onError.subscribe( ( error ) =>
+				this.emitClientMessage( {
+					version: DEFAULT_PROTOCOL_VERSION,
+					error: {
+						code: error.code,
+						message: error.message,
+						surfaceId: error.surfaceId ?? surface.id,
+					},
+				} as ClientMessage )
+			),
+		];
+		this.surfaceUnsubscribers.set( surface.id, [
+			...subscriptions.map( ( s ) => () => s.unsubscribe() ),
+			() => componentSubscriptions.forEach( ( off ) => off() ),
+		] );
 	}
 
 	// -- Outbound messages ----------------------------------------------------
@@ -126,6 +192,17 @@ export class A2UIProcessor {
 		};
 	}
 
+	private emitAction( action: A2uiClientAction ) {
+		const message: ActionMessage = {
+			version: DEFAULT_PROTOCOL_VERSION,
+			action,
+		};
+		for ( const listener of this.actionListeners ) {
+			listener( message );
+		}
+		this.emitClientMessage( message as ClientMessage );
+	}
+
 	private emitClientMessage( message: ClientMessage ) {
 		for ( const listener of this.clientMessageListeners ) {
 			listener( message );
@@ -135,75 +212,19 @@ export class A2UIProcessor {
 	// -- Inbound messages -----------------------------------------------------
 
 	/**
-	 * Processes one message. Throws `A2UIProtocolError` on invalid input.
-	 * @param input A parsed server message.
+	 * Processes one message. Throws on invalid input.
+	 * @param message A parsed server message.
 	 */
-	processMessage( input: unknown ): void {
-		const message = input as Partial< ServerMessage > & {
-			version?: string;
-		};
-		if ( ! message || typeof message !== 'object' ) {
-			throw new A2UIProtocolError( 'Message is not an object.' );
-		}
-		if (
-			typeof message.version === 'string' &&
-			! message.version.startsWith( SUPPORTED_VERSION_PREFIX )
-		) {
-			throw new A2UIProtocolError(
-				`Unsupported protocol version '${ message.version }'. This renderer speaks ${ SUPPORTED_VERSION_PREFIX }.x.`
-			);
-		}
-		const kinds = [
-			'createSurface',
-			'updateComponents',
-			'updateDataModel',
-			'deleteSurface',
-		].filter( ( key ) => key in message );
-		if ( kinds.length !== 1 ) {
-			throw new A2UIProtocolError(
-				kinds.length === 0
-					? 'Message contains no known update type.'
-					: `Message contains multiple update types: ${ kinds.join( ', ' ) }.`
-			);
-		}
-		switch ( kinds[ 0 ] ) {
-			case 'createSurface':
-				this.createSurface(
-					( message as { createSurface: CreateSurfacePayload } )
-						.createSurface,
-					message.version
-				);
-				break;
-			case 'updateComponents':
-				this.updateComponents(
-					( message as { updateComponents: UpdateComponentsPayload } )
-						.updateComponents
-				);
-				break;
-			case 'updateDataModel':
-				this.updateDataModel(
-					( message as { updateDataModel: UpdateDataModelPayload } )
-						.updateDataModel
-				);
-				break;
-			case 'deleteSurface':
-				this.deleteSurface(
-					( message as { deleteSurface: DeleteSurfacePayload } )
-						.deleteSurface
-				);
-				break;
-		}
+	processMessage( message: unknown ): void {
+		this.processMessages( [ message ] );
 	}
 
 	/**
-	 * Processes several messages. Stops at the first invalid one and throws.
+	 * Processes several messages. Throws on the first invalid one.
 	 * @param messages Messages, or a wrapper object with a `messages` array.
 	 */
 	processMessages( messages: unknown[] | { messages: unknown[] } ): void {
-		const list = Array.isArray( messages ) ? messages : messages.messages;
-		for ( const message of list ) {
-			this.processMessage( message );
-		}
+		this.inner.processMessages( messages as never );
 	}
 
 	/**
@@ -233,124 +254,23 @@ export class A2UIProcessor {
 		return errors;
 	}
 
-	private createSurface( payload: CreateSurfacePayload, version?: string ) {
-		if ( ! payload?.surfaceId ) {
-			throw new A2UIProtocolError(
-				"'createSurface' requires a 'surfaceId'.",
-				undefined,
-				'/createSurface/surfaceId'
-			);
-		}
-		if ( ! payload.catalogId ) {
-			throw new A2UIProtocolError(
-				"'createSurface' requires a 'catalogId'.",
-				payload.surfaceId,
-				'/createSurface/catalogId'
-			);
-		}
-		if (
-			this.strictCatalogs &&
-			! this.supportedCatalogIds.includes( payload.catalogId )
-		) {
-			throw new A2UIProtocolError(
-				`Unsupported catalog '${ payload.catalogId }'.`,
-				payload.surfaceId,
-				'/createSurface/catalogId'
-			);
-		}
-		if ( this.surfaces.has( payload.surfaceId ) ) {
-			throw new A2UIProtocolError(
-				`Surface '${ payload.surfaceId }' already exists. Delete it before creating it again.`,
-				payload.surfaceId
-			);
-		}
-		const surface = new Surface(
-			payload.surfaceId,
-			payload.catalogId,
-			payload.theme ?? {},
-			payload.sendDataModel ?? false,
-			version ?? DEFAULT_PROTOCOL_VERSION
-		);
-		this.surfaces.set( surface.id, surface );
-		this.dataModelUnsubscribers.set(
-			surface.id,
-			surface.dataModel.subscribe( () => this.notify() )
-		);
-		this.notify();
-	}
-
-	private requireSurface(
-		surfaceId: string | undefined,
-		kind: string
-	): Surface {
-		if ( ! surfaceId ) {
-			throw new A2UIProtocolError(
-				`'${ kind }' requires a 'surfaceId'.`,
-				undefined,
-				`/${ kind }/surfaceId`
-			);
-		}
-		const surface = this.surfaces.get( surfaceId );
-		if ( ! surface ) {
-			throw new A2UIProtocolError(
-				`Surface '${ surfaceId }' does not exist. Send 'createSurface' first.`,
-				surfaceId
-			);
-		}
-		return surface;
-	}
-
-	private updateComponents( payload: UpdateComponentsPayload ) {
-		const surface = this.requireSurface(
-			payload?.surfaceId,
-			'updateComponents'
-		);
-		surface.applyComponents( payload.components );
-		this.notify();
-	}
-
-	private updateDataModel( payload: UpdateDataModelPayload ) {
-		const surface = this.requireSurface(
-			payload?.surfaceId,
-			'updateDataModel'
-		);
-		// DataModel.set notifies the processor through its subscription.
-		surface.dataModel.set( payload.path ?? '/', payload.value );
-	}
-
-	private deleteSurface( payload: DeleteSurfacePayload ) {
-		if ( ! payload?.surfaceId ) {
-			throw new A2UIProtocolError(
-				"'deleteSurface' requires a 'surfaceId'.",
-				undefined,
-				'/deleteSurface/surfaceId'
-			);
-		}
-		if ( this.surfaces.delete( payload.surfaceId ) ) {
-			this.dataModelUnsubscribers.get( payload.surfaceId )?.();
-			this.dataModelUnsubscribers.delete( payload.surfaceId );
-			this.notify();
-		}
-	}
-
 	// -- Rendering helpers ----------------------------------------------------
 
+	get surfaces(): ReadonlyMap< string, Surface > {
+		return this.inner.getSurfaces();
+	}
+
 	getSurface( surfaceId: string ): Surface | undefined {
-		return this.surfaces.get( surfaceId );
+		return this.inner.getSurface( surfaceId );
 	}
 
 	/**
-	 * Builds a resolution scope for a component rendered inside `surface`.
+	 * The data context a component inside `surface` resolves values in.
 	 * @param surface   Surface the component belongs to.
 	 * @param scopePath Absolute pointer that relative bindings resolve against.
 	 */
-	createScope( surface: Surface, scopePath?: string ): ResolveScope {
-		return {
-			dataModel: surface.dataModel,
-			functions: this.functions,
-			scopePath,
-			locale: this.locale,
-		};
+	createScope( surface: Surface, scopePath?: string ): DataContext {
+		return new DataContext( surface, scopePath ?? '/' );
 	}
 
 	/**
@@ -359,15 +279,8 @@ export class A2UIProcessor {
 	 * @param path      JSON Pointer.
 	 * @param value     New value, or `undefined` to remove the key.
 	 */
-	setValue(
-		surfaceId: string,
-		path: string,
-		value: JsonValue | undefined
-	): void {
-		this.requireSurface( surfaceId, 'setValue' ).dataModel.set(
-			path,
-			value
-		);
+	setValue( surfaceId: string, path: string, value: unknown ): void {
+		this.requireSurface( surfaceId ).dataModel.set( path, value );
 	}
 
 	/**
@@ -380,81 +293,46 @@ export class A2UIProcessor {
 	 */
 	dispatchAction(
 		surfaceId: string,
-		sourceComponentId: ComponentId,
+		sourceComponentId: string,
 		action: Action,
 		scopePath?: string
 	): void {
-		const surface = this.requireSurface( surfaceId, 'dispatchAction' );
-		const scope = this.createScope( surface, scopePath );
-
-		if ( 'functionCall' in action ) {
-			resolveDynamicValue( action.functionCall, scope );
-			return;
+		const surface = this.requireSurface( surfaceId );
+		const context = new ComponentContext(
+			surface,
+			sourceComponentId,
+			scopePath ?? '/'
+		);
+		// Resolving a function call runs it; an event resolves to its payload.
+		const resolved = context.dataContext.resolveAction( action );
+		if ( 'event' in action ) {
+			void context.dispatchAction( resolved as Action );
 		}
-
-		const context: JsonObject = {};
-		for ( const [ key, raw ] of Object.entries(
-			action.event.context ?? {}
-		) ) {
-			const resolved = resolveDynamicValue( raw, scope );
-			context[ key ] =
-				resolved === undefined ? null : ( resolved as JsonValue );
-		}
-		const message: ActionMessage = {
-			version: surface.version,
-			action: {
-				name: action.event.name,
-				surfaceId,
-				sourceComponentId,
-				timestamp: new Date().toISOString(),
-				context,
-			},
-		};
-		for ( const listener of this.actionListeners ) {
-			listener( message, surface );
-		}
-		this.emitClientMessage( message );
 	}
 
-	/**
-	 * Reports a client-side error to the agent.
-	 * @param error   Error payload.
-	 * @param version Protocol version to tag the message with.
-	 */
-	reportError(
-		error: ErrorMessage[ 'error' ],
-		version = DEFAULT_PROTOCOL_VERSION
-	): void {
-		this.emitClientMessage( { version, error } );
+	private requireSurface( surfaceId: string ): Surface {
+		const surface = this.getSurface( surfaceId );
+		if ( ! surface ) {
+			throw new Error( `Surface '${ surfaceId }' does not exist.` );
+		}
+		return surface;
 	}
 
 	// -- Capabilities & data model exchange -----------------------------------
 
 	getClientCapabilities(
 		version = DEFAULT_PROTOCOL_VERSION
-	): ClientCapabilities {
-		return {
-			[ version ]: {
-				supportedCatalogIds: [ ...this.supportedCatalogIds ],
-			},
-		};
+	): Record< string, A2uiVersionCapabilities > {
+		return this.inner.getClientCapabilities( {
+			versions: [ version ],
+		} ) as Record< string, A2uiVersionCapabilities >;
 	}
 
 	/**
 	 * Data models of every surface created with `sendDataModel: true`.
 	 * @param version Protocol version to tag the message with.
 	 */
-	getClientDataModel(
-		version = DEFAULT_PROTOCOL_VERSION
-	): ClientDataModel | undefined {
-		const surfaces: Record< string, JsonValue > = {};
-		for ( const surface of this.surfaces.values() ) {
-			if ( surface.sendDataModel ) {
-				surfaces[ surface.id ] = surface.dataModel.snapshot();
-			}
-		}
-		return Object.keys( surfaces ).length
-			? { version, surfaces }
-			: undefined;
+	getClientDataModel( version = DEFAULT_PROTOCOL_VERSION ) {
+		return this.inner.getClientDataModel( version );
 	}
 }

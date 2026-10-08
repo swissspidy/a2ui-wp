@@ -7,8 +7,8 @@ import {
 	CardBody,
 	TabPanel,
 } from '@wordpress/components';
-import type { ChildList, DynamicString } from '../../core/types';
-import { resolveString } from '../../core/resolver';
+import type { ChildList, DynamicString } from '@a2ui/web_core/v0_9';
+import { resolveString } from '../resolve';
 import type { A2UIComponentProps } from '../context';
 import { useResolveScope } from '../hooks';
 import { A2UIChildren, A2UINode } from '../node';

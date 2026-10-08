@@ -28,9 +28,8 @@ import type {
 	DynamicNumber,
 	DynamicString,
 	DynamicStringList,
-} from '../../core/types';
-import { coerceToString } from '../../core/functions';
-import { resolveString } from '../../core/resolver';
+} from '@a2ui/web_core/v0_9';
+import { coerceToString, resolveString } from '../resolve';
 import type { A2UIComponentProps } from '../context';
 import {
 	useAccessibility,

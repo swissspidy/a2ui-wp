@@ -1,25 +1,23 @@
 import { useCallback, useMemo, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type {
-	JsonValue,
 	AccessibilityAttributes,
 	Action,
 	CheckRule,
-} from '../core/types';
+	DataContext,
+} from '@a2ui/web_core/v0_9';
 import {
 	isDataBinding,
 	resolveBoolean,
-	resolveDynamicValue,
 	resolveNumber,
 	resolvePath,
 	resolveString,
 	resolveStringList,
-	type ResolveScope,
-} from '../core/resolver';
+} from './resolve';
 import { useProcessor, useScopePath, useSurface } from './context';
 
 /** The resolution scope of the current component. */
-export function useResolveScope(): ResolveScope {
+export function useResolveScope(): DataContext {
 	const processor = useProcessor();
 	const surface = useSurface();
 	const scopePath = useScopePath();
@@ -30,7 +28,7 @@ export function useResolveScope(): ResolveScope {
 }
 
 export function useDynamicValue( value: unknown ): unknown {
-	return resolveDynamicValue( value, useResolveScope() );
+	return useResolveScope().resolveDynamicValue( value );
 }
 
 export function useDynamicString( value: unknown ): string {
@@ -56,20 +54,23 @@ export function useDynamicStringList( value: unknown ): string[] {
  * @param value  Value to resolve.
  * @param coerce Converts the resolved value to the type the input works with.
  */
-export function useBoundValue< T extends JsonValue >(
+export function useBoundValue< T >(
 	value: unknown,
 	coerce: ( resolved: unknown ) => T
 ): [ T, ( next: T ) => void ] {
 	const processor = useProcessor();
 	const surface = useSurface();
 	const scope = useResolveScope();
+	const scopePath = useScopePath();
 	const bound = isDataBinding( value );
-	const absolutePath = bound ? resolvePath( value.path, scope ) : undefined;
+	const absolutePath = bound
+		? resolvePath( value.path, scopePath )
+		: undefined;
 	const [ local, setLocal ] = useState< T >( () =>
-		coerce( resolveDynamicValue( value, scope ) )
+		coerce( scope.resolveDynamicValue( value ) )
 	);
 
-	const current = bound
+	const current = absolutePath
 		? coerce( surface.dataModel.get( absolutePath ) )
 		: local;
 

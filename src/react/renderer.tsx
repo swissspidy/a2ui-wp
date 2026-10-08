@@ -2,7 +2,6 @@ import { useEffect, useMemo, useSyncExternalStore } from '@wordpress/element';
 import type { CSSProperties, ReactNode } from 'react';
 import { __experimentalVStack as VStack } from '@wordpress/components';
 import type { A2UIProcessor, ActionListener } from '../core/processor';
-import { ROOT_COMPONENT_ID } from '../core/surface';
 import { wordPressCatalog } from './catalog';
 import {
 	CatalogContext,
@@ -80,11 +79,11 @@ export function A2UISurface( props: A2UISurfaceProps ) {
 	useProcessorVersion( processor );
 	const surface = processor.getSurface( surfaceId );
 	const style = useMemo(
-		() => ( surface ? themeStyle( surface.theme ) : undefined ),
+		() => ( surface ? themeStyle( surface.theme ?? {} ) : undefined ),
 		[ surface ]
 	);
 
-	if ( ! surface || ! surface.root ) {
+	if ( ! surface || ! surface.componentsModel.has( surface.rootId ) ) {
 		return <>{ placeholder }</>;
 	}
 
@@ -99,7 +98,7 @@ export function A2UISurface( props: A2UISurfaceProps ) {
 						data-surface-id={ surfaceId }
 						style={ style }
 					>
-						<A2UINode id={ ROOT_COMPONENT_ID } />
+						<A2UINode id={ surface.rootId } />
 					</div>
 				</CatalogContext.Provider>
 			</SurfaceContext.Provider>
