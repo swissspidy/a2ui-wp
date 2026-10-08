@@ -161,6 +161,39 @@ describe( 'A2UIRenderer', () => {
 		).toBe( 'true' );
 	} );
 
+	it( 'labels long text fields', () => {
+		const processor = new A2UIProcessor();
+		processor.processMessages( [
+			{
+				version: 'v0.9.1',
+				createSurface: { surfaceId: 's', catalogId: CATALOG },
+			},
+			{
+				version: 'v0.9.1',
+				updateComponents: {
+					surfaceId: 's',
+					components: [
+						{
+							id: 'root',
+							component: 'TextField',
+							label: 'Notes',
+							variant: 'longText',
+							value: { path: '/notes' },
+						},
+					],
+				},
+			},
+			{
+				version: 'v0.9.1',
+				updateDataModel: { surfaceId: 's', value: { notes: 'Hi' } },
+			},
+		] );
+		render( <A2UIRenderer processor={ processor } /> );
+		const field = screen.getByLabelText( 'Notes' );
+		expect( field.tagName ).toBe( 'TEXTAREA' );
+		expect( ( field as HTMLTextAreaElement ).value ).toBe( 'Hi' );
+	} );
+
 	it( 'renders nothing for a surface without a root and removes deleted surfaces', () => {
 		const processor = new A2UIProcessor();
 		processor.processMessage( {

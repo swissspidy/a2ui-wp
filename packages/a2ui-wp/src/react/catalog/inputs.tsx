@@ -165,7 +165,10 @@ export function TextField( {
 		id: `a2ui-${ id }`,
 	};
 	if ( props.variant === 'longText' ) {
-		return <TextareaControl { ...common } rows={ 4 } />;
+		// TextareaControl labels its own instance id: an `id` would reach the
+		// textarea but not the label, leaving the field unlabelled.
+		const { id: _id, ...textarea } = common;
+		return <TextareaControl { ...textarea } rows={ 4 } />;
 	}
 	const type = INPUT_TYPES[ props.variant ?? 'shortText' ];
 	return <TextControl { ...common } type={ type } __next40pxDefaultSize />;

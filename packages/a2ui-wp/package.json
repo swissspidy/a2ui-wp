@@ -49,6 +49,7 @@
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
+		"prepack": "npm run clean && npm run build",
 		"clean": "rm -rf dist"
 	}
 }
