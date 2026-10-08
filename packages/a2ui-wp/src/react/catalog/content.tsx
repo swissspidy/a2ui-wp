@@ -5,9 +5,13 @@ import {
 	Icon as WPIcon,
 } from '@wordpress/components';
 import type { DynamicString } from '@a2ui/web_core/v0_9';
-import type { A2UIComponentProps } from '../context';
-import { useAccessibility, useDynamicString, useDynamicValue } from '../hooks';
-import { getWordPressIcon } from './icons';
+import type { A2UIComponentProps } from '../context.js';
+import {
+	useAccessibility,
+	useDynamicString,
+	useDynamicValue,
+} from '../hooks.js';
+import { getWordPressIcon } from './icons.js';
 
 export interface TextProps {
 	text: DynamicString;

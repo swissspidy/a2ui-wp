@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { A2UIProcessor } from '../../src/core/processor';
+import { A2UIProcessor } from '@swissspidy/a2ui-wp';
 import { examples } from '../../src/admin/examples';
 
 describe( 'playground examples', () => {

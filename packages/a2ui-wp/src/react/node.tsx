@@ -1,8 +1,13 @@
 import { Notice } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
 import type { ChildList } from '@a2ui/web_core/v0_9';
-import { ScopeContext, useCatalog, useScopePath, useSurface } from './context';
-import { isDataBinding, resolvePath } from './resolve';
+import {
+	ScopeContext,
+	useCatalog,
+	useScopePath,
+	useSurface,
+} from './context.js';
+import { isDataBinding, resolvePath } from './resolve.js';
 
 /**
  * Renders the component with the given id from the current surface.

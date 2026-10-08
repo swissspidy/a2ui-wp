@@ -1,6 +1,6 @@
 import { createContext, useContext } from '@wordpress/element';
 import type { ComponentType } from '@wordpress/element';
-import type { A2UIProcessor, Surface } from '../core/processor';
+import type { A2UIProcessor, Surface } from '../core/processor.js';
 
 /** Props every catalog component receives. */
 export interface A2UIComponentProps< P = Record< string, unknown > > {

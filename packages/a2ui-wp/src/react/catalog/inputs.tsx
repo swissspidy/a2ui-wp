@@ -29,8 +29,8 @@ import type {
 	DynamicString,
 	DynamicStringList,
 } from '@a2ui/web_core/v0_9';
-import { coerceToString, resolveString } from '../resolve';
-import type { A2UIComponentProps } from '../context';
+import { coerceToString, resolveString } from '../resolve.js';
+import type { A2UIComponentProps } from '../context.js';
 import {
 	useAccessibility,
 	useAction,
@@ -38,8 +38,8 @@ import {
 	useChecks,
 	useDynamicString,
 	useResolveScope,
-} from '../hooks';
-import { A2UINode } from '../node';
+} from '../hooks.js';
+import { A2UINode } from '../node.js';
 
 interface Checkable {
 	checks?: CheckRule[];
