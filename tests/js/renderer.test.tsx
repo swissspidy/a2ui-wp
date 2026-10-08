@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { A2UIProcessor, type ActionMessage } from '../../src/core/processor';
-import { A2UIRenderer } from '../../src/react/renderer';
+import {
+	A2UIProcessor,
+	A2UIRenderer,
+	type ActionMessage,
+} from '@swissspidy/a2ui-wp';
 
 const CATALOG =
 	'https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json';

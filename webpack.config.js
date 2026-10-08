@@ -21,5 +21,17 @@ module.exports = {
 	resolve: {
 		...defaultConfig.resolve,
 		extensions: [ '.ts', '.tsx', '...' ],
+		// The plugin builds the package from source; its imports use the
+		// `.js` extensions Node's ESM resolution needs in the published files.
+		alias: {
+			...defaultConfig.resolve?.alias,
+			'@swissspidy/a2ui-wp$': resolve(
+				__dirname,
+				'packages/a2ui-wp/src/index.ts'
+			),
+		},
+		extensionAlias: {
+			'.js': [ '.ts', '.tsx', '.js' ],
+		},
 	},
 };

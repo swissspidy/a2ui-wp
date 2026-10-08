@@ -22,10 +22,10 @@ Use [WordPress Playground](https://wordpress.org/playground/) to try this plugin
 
 ## How it works
 
-The plugin registers one admin page and one script. The script contains three layers:
+The plugin registers one admin page and one script. The renderer itself lives in [`packages/a2ui-wp`](./packages/a2ui-wp), which is also published to npm as [`@swissspidy/a2ui-wp`](https://www.npmjs.com/package/@swissspidy/a2ui-wp). The script contains three layers:
 
-- `src/core/` wraps [`@a2ui/web_core`](https://www.npmjs.com/package/@a2ui/web_core), the reference implementation of the A2UI client side. Message processing, the per-surface data model, data binding, the `${...}` expression syntax and the basic catalog's functions all come from there. The wrapper adds a change counter for React, wraps outgoing `action` and `error` messages in their envelope, and reads JSON Lines.
-- `src/react/` is the React layer: `<A2UIRenderer>` / `<A2UISurface>`, hooks for catalog components (`useDynamicString`, `useBoundValue`, `useChecks`, `useAction`), and the component catalog that maps every basic catalog component onto `@wordpress/components`.
+- `packages/a2ui-wp/src/core/` wraps [`@a2ui/web_core`](https://www.npmjs.com/package/@a2ui/web_core), the reference implementation of the A2UI client side. Message processing, the per-surface data model, data binding, the `${...}` expression syntax and the basic catalog's functions all come from there. The wrapper adds a change counter for React, wraps outgoing `action` and `error` messages in their envelope, and reads JSON Lines.
+- `packages/a2ui-wp/src/react/` is the React layer: `<A2UIRenderer>` / `<A2UISurface>`, hooks for catalog components (`useDynamicString`, `useBoundValue`, `useChecks`, `useAction`), and the component catalog that maps every basic catalog component onto `@wordpress/components`.
 - `src/admin/` is the playground page, with the example streams as hard-coded JSON.
 
 The bundle is built with `@wordpress/scripts`, so `@wordpress/components`, `@wordpress/element` and `@wordpress/i18n` resolve to the copies WordPress already loads rather than being bundled. What ships is `@a2ui/web_core` (its Lit components are tree-shaken out), the catalog, and the playground.
@@ -36,7 +36,7 @@ The bundle is built with `@wordpress/scripts`, so `@wordpress/components`, `@wor
 | --- | --- |
 | `Text` (`h1`–`h5`, `body`, `caption`) | `Heading`, `Text` |
 | `Image` (`icon`, `avatar`, `*Feature`, `header`) | `<img>` sized per variant |
-| `Icon` | `Icon` with [`@wordpress/icons`](https://github.com/WordPress/gutenberg/tree/trunk/packages/icons) (see `src/react/catalog/icons.ts` for the name map) |
+| `Icon` | `Icon` with [`@wordpress/icons`](https://github.com/WordPress/gutenberg/tree/trunk/packages/icons) (see `packages/a2ui-wp/src/react/catalog/icons.ts` for the name map) |
 | `Video`, `AudioPlayer` | native `<video>` / `<audio>` |
 | `Row`, `Column` | `HStack`, `VStack` (`justify` and `align` mapped to flexbox) |
 | `List` (static or template children) | scrollable `VStack` / `HStack` |
@@ -55,10 +55,10 @@ Theme parameters from `createSurface` are honoured where they map onto something
 
 ### Using the renderer elsewhere
 
-The `a2ui-wp-admin` script handle is registered on `init`, so another screen can enqueue it. The exports in `src/index.ts` are what the playground itself uses:
+The `a2ui-wp-admin` script handle is registered on `init`, so another screen can enqueue it. To build your own screen, install [`@swissspidy/a2ui-wp`](./packages/a2ui-wp) from npm; it is what the playground itself uses:
 
 ```tsx
-import { A2UIProcessor, A2UIRenderer } from '../index';
+import { A2UIProcessor, A2UIRenderer } from '@swissspidy/a2ui-wp';
 
 const processor = new A2UIProcessor();
 
@@ -98,5 +98,7 @@ Licensed under either of
 - GNU General Public License, version 2 or later ([`LICENSE-GPL`](./LICENSE-GPL))
 
 at your option (SPDX: `Apache-2.0 OR GPL-2.0-or-later`).
+
+The npm package [`@swissspidy/a2ui-wp`](./packages/a2ui-wp) is licensed under Apache-2.0 alone.
 
 The built JavaScript bundles [`@wordpress/icons`](https://www.npmjs.com/package/@wordpress/icons) (GPL-2.0-or-later) and [`@a2ui/web_core`](https://github.com/a2ui-project/a2ui) (Apache-2.0). Apache-2.0 is compatible with version 3 of the GPL, so the built plugin as distributed is covered by GPL-3.0-or-later.

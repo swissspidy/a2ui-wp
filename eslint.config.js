@@ -7,7 +7,11 @@ module.exports = [
 	...defaultConfig,
 
 	{
-		files: [ 'src/**/*.{ts,tsx}' ],
+		ignores: [ 'packages/*/dist/**' ],
+	},
+
+	{
+		files: [ 'src/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}' ],
 		rules: {
 			// The layout primitives the renderer is built on (HStack, VStack,
 			// Text, Heading, Divider, ToggleGroupControl) are only exported

@@ -10,4 +10,4 @@ export {
 	type ActionListener,
 	type ClientMessageListener,
 	type ChangeListener,
-} from './processor';
+} from './processor.js';

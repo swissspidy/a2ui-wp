@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useSyncExternalStore } from '@wordpress/element';
 import type { CSSProperties, ReactNode } from 'react';
 import { __experimentalVStack as VStack } from '@wordpress/components';
-import type { A2UIProcessor, ActionListener } from '../core/processor';
-import { wordPressCatalog } from './catalog';
+import type { A2UIProcessor, ActionListener } from '../core/processor.js';
+import { wordPressCatalog } from './catalog/index.js';
 import {
 	CatalogContext,
 	ProcessorContext,
 	SurfaceContext,
 	type ComponentCatalog,
-} from './context';
-import { A2UINode } from './node';
+} from './context.js';
+import { A2UINode } from './node.js';
 
 function useProcessorVersion( processor: A2UIProcessor ) {
 	return useSyncExternalStore(

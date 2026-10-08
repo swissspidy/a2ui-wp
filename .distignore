@@ -20,6 +20,7 @@ package.json
 phpcs.xml.dist
 phpstan.neon.dist
 phpunit.xml.dist
+packages
 src
 tests
 tsconfig.json

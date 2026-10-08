@@ -13,8 +13,8 @@ import {
 	resolvePath,
 	resolveString,
 	resolveStringList,
-} from './resolve';
-import { useProcessor, useScopePath, useSurface } from './context';
+} from './resolve.js';
+import { useProcessor, useScopePath, useSurface } from './context.js';
 
 /** The resolution scope of the current component. */
 export function useResolveScope(): DataContext {
