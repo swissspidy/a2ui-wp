@@ -23,6 +23,9 @@
 		"node": ">=22"
 	},
 	"private": true,
+	"dependencies": {
+		"@a2ui/web_core": "^0.12.0"
+	},
 	"devDependencies": {
 		"@playwright/test": "^1.63.0",
 		"@testing-library/react": "^16.3.0",
@@ -53,8 +56,5 @@
 		"test:unit": "vitest run",
 		"test:unit:watch": "vitest",
 		"test:e2e": "wp-scripts test-playwright --config tests/e2e/playwright.config.ts"
-	},
-	"dependencies": {
-		"@a2ui/web_core": "^0.12.0"
 	}
 }
