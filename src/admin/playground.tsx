@@ -65,6 +65,9 @@ export function Playground() {
 	// The agent conversation the rendered surfaces belong to, if any. A ref:
 	// action listeners read it, and updating it must not re-render.
 	const conversation = useRef< Conversation | null >( null );
+	// Bumped whenever the stage is replaced, so that a request that was
+	// still pending cannot overwrite a newer screen.
+	const generation = useRef( 0 );
 
 	const example = useMemo(
 		() =>
@@ -169,6 +172,7 @@ export function Playground() {
 	);
 
 	const reset = () => {
+		generation.current++;
 		conversation.current = null;
 		setProcessor( new A2UIProcessor() );
 		setCursor( 0 );
@@ -190,6 +194,7 @@ export function Playground() {
 	};
 
 	const renderAll = () => {
+		generation.current++;
 		conversation.current = null;
 		const fresh = new A2UIProcessor();
 		setProcessor( fresh );
@@ -213,10 +218,14 @@ export function Playground() {
 	};
 
 	const generate = async () => {
+		const current = ++generation.current;
 		setAgentBusy( true );
 		setAgentError( null );
 		try {
 			const messages = await askAgent( { prompt } );
+			if ( current !== generation.current ) {
+				return;
+			}
 			const fresh = new A2UIProcessor();
 			setProcessor( fresh );
 			setLog( [] );
@@ -225,7 +234,9 @@ export function Playground() {
 			setJsonl( toJsonl( messages ) );
 			setCursor( messages.length );
 		} catch ( error ) {
-			setAgentError( describeAgentError( error ) );
+			if ( current === generation.current ) {
+				setAgentError( describeAgentError( error ) );
+			}
 		} finally {
 			setAgentBusy( false );
 		}

@@ -29,7 +29,7 @@ The basic catalog of A2UI v0.9.1. Messages tagged v0.9 are accepted too.
 
 = Does this talk to an agent? =
 
-Not yet. The playground renders bundled and pasted message streams. The renderer itself is transport-agnostic and takes a complete list of messages per turn, which is what a REST round-trip returns, so no streaming support on the host is required.
+To a demo agent. If the site has an AI provider configured for the WordPress AI Client, the playground sends requests and button actions to a REST endpoint that answers with A2UI messages. The renderer itself is transport-agnostic and takes a complete list of messages per turn, which is what a REST round-trip returns, so no streaming support on the host is required.
 
 == Changelog ==
 
