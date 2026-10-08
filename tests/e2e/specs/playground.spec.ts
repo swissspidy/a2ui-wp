@@ -62,6 +62,35 @@ test.describe( 'A2UI playground', () => {
 		await expect( log ).toContainText( '"email": "ada@example.com"' );
 	} );
 
+	test( 'builds a UI with the agent and sends its actions back', async ( {
+		page,
+	} ) => {
+		// The tests environment answers with a stub agent instead of an AI
+		// provider: see tests/e2e/mu-plugins/stub-agent.php.
+		await page
+			.getByRole( 'textbox', { name: 'Request' } )
+			.fill( 'Newsletter sign-up' );
+		await page.getByRole( 'button', { name: 'Generate' } ).click();
+
+		const stage = page.locator( '.a2ui-wp-surface' );
+
+		await expect(
+			stage.getByRole( 'heading', { name: 'Newsletter sign-up' } )
+		).toBeVisible();
+
+		await stage
+			.getByRole( 'textbox', { name: 'Email' } )
+			.fill( 'ada@example.com' );
+		await stage.getByRole( 'button', { name: 'Subscribe' } ).click();
+
+		await expect(
+			stage.getByText( 'Subscribed ada@example.com' )
+		).toBeVisible();
+		await expect(
+			page.locator( '.a2ui-wp-playground__log' )
+		).toContainText( 'The agent answered with 2 messages.' );
+	} );
+
 	test( 'steps through a stream one message at a time', async ( {
 		page,
 	} ) => {

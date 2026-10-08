@@ -114,6 +114,20 @@ function add_admin_menu(): void {
 function enqueue_admin_assets(): void {
 	wp_enqueue_script( 'a2ui-wp-admin' );
 	wp_enqueue_style( 'a2ui-wp-admin' );
+
+	wp_add_inline_script(
+		'a2ui-wp-admin',
+		sprintf(
+			'window.a2uiWp = %s;',
+			wp_json_encode(
+				[
+					'agentAvailable' => is_agent_available(),
+					'agentPath'      => '/' . REST_NAMESPACE . '/agent',
+				]
+			)
+		),
+		'before'
+	);
 }
 
 /**

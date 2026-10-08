@@ -33,7 +33,8 @@ import {
 	A2UIRenderer,
 	type ClientMessage,
 } from '@swissspidy/a2ui-wp';
-import { examples, type Example } from './examples';
+import { agentSettings, askAgent, describeAgentError } from './agent';
+import { examples } from './examples';
 
 interface LogEntry {
 	id: number;
@@ -41,18 +42,32 @@ interface LogEntry {
 	text: string;
 }
 
-const toJsonl = ( example: Example ) =>
-	example.messages
-		.map( ( message ) => JSON.stringify( message ) )
-		.join( '\n' );
+interface Conversation {
+	prompt: string;
+	messages: unknown[];
+}
+
+const toJsonl = ( messages: unknown[] ) =>
+	messages.map( ( message ) => JSON.stringify( message ) ).join( '\n' );
 
 export function Playground() {
 	const [ processor, setProcessor ] = useState( () => new A2UIProcessor() );
 	const [ exampleName, setExampleName ] = useState( examples[ 0 ].name );
-	const [ jsonl, setJsonl ] = useState( () => toJsonl( examples[ 0 ] ) );
+	const [ jsonl, setJsonl ] = useState( () =>
+		toJsonl( examples[ 0 ].messages )
+	);
 	const [ log, setLog ] = useState< LogEntry[] >( [] );
 	const [ cursor, setCursor ] = useState( 0 );
+	const [ prompt, setPrompt ] = useState( '' );
+	const [ agentBusy, setAgentBusy ] = useState( false );
+	const [ agentError, setAgentError ] = useState< string | null >( null );
 	const logId = useRef( 0 );
+	// The agent conversation the rendered surfaces belong to, if any. A ref:
+	// action listeners read it, and updating it must not re-render.
+	const conversation = useRef< Conversation | null >( null );
+	// Bumped whenever the stage is replaced, so that a request that was
+	// still pending cannot overwrite a newer screen.
+	const generation = useRef( 0 );
 
 	const example = useMemo(
 		() =>
@@ -71,6 +86,65 @@ export function Playground() {
 		);
 	}, [] );
 
+	const applyMessages = useCallback(
+		( target: A2UIProcessor, messages: unknown[] ) => {
+			messages.forEach( ( message, index ) => {
+				try {
+					target.processMessage( message );
+				} catch ( error ) {
+					append(
+						'error',
+						`Message ${ index + 1 }: ${ error instanceof Error ? error.message : String( error ) }`
+					);
+				}
+			} );
+		},
+		[ append ]
+	);
+
+	// Sends an action back to the agent that built the surface, and applies
+	// the messages it answers with.
+	const continueConversation = useCallback(
+		( action: ClientMessage, dataModel: unknown ) => {
+			const current = conversation.current;
+			if ( ! current ) {
+				return;
+			}
+			setAgentBusy( true );
+			askAgent( {
+				prompt: current.prompt,
+				messages: current.messages,
+				action,
+				dataModel: dataModel ?? null,
+			} )
+				.then( ( messages ) => {
+					if ( conversation.current !== current ) {
+						return;
+					}
+					applyMessages( processor, messages );
+					current.messages = [ ...current.messages, ...messages ];
+					setJsonl( toJsonl( current.messages ) );
+					setCursor( current.messages.length );
+					append(
+						'info',
+						sprintf(
+							/* translators: %d: number of messages */
+							__(
+								'The agent answered with %d messages.',
+								'a2ui-wp'
+							),
+							messages.length
+						)
+					);
+				} )
+				.catch( ( error ) =>
+					append( 'error', describeAgentError( error ) )
+				)
+				.finally( () => setAgentBusy( false ) );
+		},
+		[ append, applyMessages, processor ]
+	);
+
 	const onClientMessage = useCallback(
 		( message: ClientMessage ) => {
 			append(
@@ -84,8 +158,11 @@ export function Playground() {
 					`sendDataModel snapshot:\n${ JSON.stringify( dataModel, null, 2 ) }`
 				);
 			}
+			if ( 'action' in message ) {
+				continueConversation( message, dataModel );
+			}
 		},
-		[ append, processor ]
+		[ append, continueConversation, processor ]
 	);
 
 	// Wire the client → server channel for the current processor instance.
@@ -95,6 +172,8 @@ export function Playground() {
 	);
 
 	const reset = () => {
+		generation.current++;
+		conversation.current = null;
 		setProcessor( new A2UIProcessor() );
 		setCursor( 0 );
 		setLog( [] );
@@ -115,6 +194,8 @@ export function Playground() {
 	};
 
 	const renderAll = () => {
+		generation.current++;
+		conversation.current = null;
 		const fresh = new A2UIProcessor();
 		setProcessor( fresh );
 		setLog( [] );
@@ -132,8 +213,33 @@ export function Playground() {
 		const next =
 			examples.find( ( item ) => item.name === name ) ?? examples[ 0 ];
 		setExampleName( next.name );
-		setJsonl( toJsonl( next ) );
+		setJsonl( toJsonl( next.messages ) );
 		reset();
+	};
+
+	const generate = async () => {
+		const current = ++generation.current;
+		setAgentBusy( true );
+		setAgentError( null );
+		try {
+			const messages = await askAgent( { prompt } );
+			if ( current !== generation.current ) {
+				return;
+			}
+			const fresh = new A2UIProcessor();
+			setProcessor( fresh );
+			setLog( [] );
+			applyMessages( fresh, messages );
+			conversation.current = { prompt, messages };
+			setJsonl( toJsonl( messages ) );
+			setCursor( messages.length );
+		} catch ( error ) {
+			if ( current === generation.current ) {
+				setAgentError( describeAgentError( error ) );
+			}
+		} finally {
+			setAgentBusy( false );
+		}
 	};
 
 	return (
@@ -141,6 +247,69 @@ export function Playground() {
 			<div className="a2ui-wp-playground__grid">
 				<aside className="a2ui-wp-playground__sidebar">
 					<VStack spacing={ 4 }>
+						<Card>
+							<CardHeader>
+								<Heading level={ 3 }>
+									{ __( 'Ask the agent', 'a2ui-wp' ) }
+								</Heading>
+							</CardHeader>
+							<CardBody>
+								<VStack spacing={ 3 }>
+									<Text>
+										{ __(
+											'Describe a screen, and the site’s AI provider builds it as A2UI. Buttons in the result send their actions back to the agent, which answers by updating the UI.',
+											'a2ui-wp'
+										) }
+									</Text>
+									{ ! agentSettings.agentAvailable && (
+										<Notice
+											status="warning"
+											isDismissible={ false }
+										>
+											{ __(
+												'No AI provider is available. Configure one for the WordPress AI Client to use the agent.',
+												'a2ui-wp'
+											) }
+										</Notice>
+									) }
+									<TextareaControl
+										label={ __( 'Request', 'a2ui-wp' ) }
+										placeholder={ __(
+											'A form to pitch a guest post, with a title, a summary and a category picker',
+											'a2ui-wp'
+										) }
+										value={ prompt }
+										onChange={ setPrompt }
+										rows={ 3 }
+										__nextHasNoMarginBottom
+									/>
+									{ agentError && (
+										<Notice
+											status="error"
+											isDismissible={ false }
+										>
+											{ agentError }
+										</Notice>
+									) }
+									<HStack justify="flex-start">
+										<Button
+											variant="primary"
+											onClick={ generate }
+											isBusy={ agentBusy }
+											disabled={
+												agentBusy ||
+												! prompt.trim() ||
+												! agentSettings.agentAvailable
+											}
+											accessibleWhenDisabled
+											__next40pxDefaultSize
+										>
+											{ __( 'Generate', 'a2ui-wp' ) }
+										</Button>
+									</HStack>
+								</VStack>
+							</CardBody>
+						</Card>
 						<Card>
 							<CardHeader>
 								<Heading level={ 3 }>

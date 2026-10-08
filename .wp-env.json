@@ -4,5 +4,12 @@
 	"config": {
 		"WP_DEBUG": true,
 		"SCRIPT_DEBUG": true
+	},
+	"env": {
+		"tests": {
+			"mappings": {
+				"wp-content/mu-plugins/a2ui-wp-stub-agent.php": "./tests/e2e/mu-plugins/stub-agent.php"
+			}
+		}
 	}
 }
