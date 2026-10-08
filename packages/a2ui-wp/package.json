@@ -1,6 +1,6 @@
 {
 	"name": "@swissspidy/a2ui-wp",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Render A2UI surfaces with the WordPress component library.",
 	"author": "Pascal Birchler",
 	"license": "Apache-2.0",
