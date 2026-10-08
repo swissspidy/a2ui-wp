@@ -4,7 +4,7 @@ import {
 	__experimentalText as WPText,
 	Icon as WPIcon,
 } from '@wordpress/components';
-import type { DynamicString } from '../../core/types';
+import type { DynamicString } from '@a2ui/web_core/v0_9';
 import type { A2UIComponentProps } from '../context';
 import { useAccessibility, useDynamicString, useDynamicValue } from '../hooks';
 import { getWordPressIcon } from './icons';

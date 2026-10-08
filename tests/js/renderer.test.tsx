@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { A2UIProcessor } from '../../src/core/processor';
+import { A2UIProcessor, type ActionMessage } from '../../src/core/processor';
 import { A2UIRenderer } from '../../src/react/renderer';
-import type { ActionMessage } from '../../src/core/types';
 
 const CATALOG =
 	'https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json';

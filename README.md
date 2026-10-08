@@ -24,11 +24,11 @@ Use [WordPress Playground](https://wordpress.org/playground/) to try this plugin
 
 The plugin registers one admin page and one script. The script contains three layers:
 
-- `src/core/` is a framework-agnostic implementation of the A2UI v0.9.1 client side: message processing (`createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface`), the per-surface data model (RFC 6901 JSON Pointers), data binding (`{ "path": ... }`), the `${...}` expression syntax, the basic catalog's client-side functions (`formatString`, `formatCurrency`, `required`, `regex`, `and`, `openUrl`, and the rest), `checks`, and outgoing `action` messages. It has no dependencies.
+- `src/core/` wraps [`@a2ui/web_core`](https://www.npmjs.com/package/@a2ui/web_core), the reference implementation of the A2UI client side. Message processing, the per-surface data model, data binding, the `${...}` expression syntax and the basic catalog's functions all come from there. The wrapper adds a change counter for React, wraps outgoing `action` and `error` messages in their envelope, and reads JSON Lines.
 - `src/react/` is the React layer: `<A2UIRenderer>` / `<A2UISurface>`, hooks for catalog components (`useDynamicString`, `useBoundValue`, `useChecks`, `useAction`), and the component catalog that maps every basic catalog component onto `@wordpress/components`.
 - `src/admin/` is the playground page, with the example streams as hard-coded JSON.
 
-The bundle is built with `@wordpress/scripts`, so `@wordpress/components`, `@wordpress/element` and `@wordpress/i18n` resolve to the copies WordPress already loads rather than being bundled. What ships is the protocol core, the catalog, and the playground.
+The bundle is built with `@wordpress/scripts`, so `@wordpress/components`, `@wordpress/element` and `@wordpress/i18n` resolve to the copies WordPress already loads rather than being bundled. What ships is `@a2ui/web_core` (its Lit components are tree-shaken out), the catalog, and the playground.
 
 ### Component mapping
 
@@ -71,7 +71,7 @@ processor.onAction( ( message ) => transport.send( message ) );
 <A2UIRenderer processor={ processor } />;
 ```
 
-`processor.getClientCapabilities()` and `processor.getClientDataModel()` give you the metadata the transport bindings ask for. Catalog components are plain React components receiving `{ id, props }`; `createCatalog()` adds or replaces them, and custom client-side functions go through `new A2UIProcessor( { functions } )`.
+`processor.getClientCapabilities()` and `processor.getClientDataModel()` give you the metadata the transport bindings ask for. Catalog components are plain React components receiving `{ id, props }`; `createCatalog()` adds or replaces them, and custom client-side functions (built with `createFunctionImplementation()` from `@a2ui/web_core/v0_9`) go through `new A2UIProcessor( { functions } )`.
 
 ## Architecture notes
 
@@ -88,10 +88,10 @@ processor.onAction( ( message ) => transport.send( message ) );
 - `Modal` opens on a click anywhere inside its `trigger`, so a trigger `Button` also fires its own action, matching the reference Lit renderer.
 - `DateTimeInput` stores whatever the WordPress pickers emit (a local ISO-like string without a zone offset).
 - The icon map covers the basic catalog's names with the closest `@wordpress/icons` equivalent; a few (`volume*`, `print`, `stop`) are approximations.
-- Component properties are not schema-validated against the catalog JSON; unknown component types render a warning `Notice`, missing references render nothing.
+- Messages are validated by `@a2ui/web_core` against the basic catalog's schemas. Unknown component types render a warning `Notice`, missing references render nothing.
 
 ## License
 
 GPL-2.0-or-later, like WordPress. See [`LICENSE`](./LICENSE).
 
-This is an independent implementation of the A2UI protocol written from the published specification; it does not vendor code from the Apache-2.0 licensed [a2ui-project/a2ui](https://github.com/a2ui-project/a2ui) repository.
+The built JavaScript bundles [`@a2ui/web_core`](https://github.com/a2ui-project/a2ui), which is Apache-2.0 licensed. Apache-2.0 is compatible with version 3 of the GPL, so the built plugin is distributed under GPL-3.0-or-later terms, which GPL-2.0-or-later permits.
