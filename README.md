@@ -10,6 +10,8 @@ A2UI (Agent-to-User Interface) is a protocol that lets an agent describe a user 
 
 Install and activate the latest nightly build on your WordPress website, then open **Tools → A2UI**. Pick one of the bundled example streams, or paste your own, and click **Render all**. Everything the rendered UI would send back to an agent shows up in the log next to it.
 
+If the site has an AI provider configured for the WordPress AI Client, **Ask the agent** builds a screen from a description instead, and answers the actions its buttons send.
+
 [![Download latest nightly build](https://img.shields.io/badge/Download%20latest%20nightly-24282D?style=for-the-badge&logo=Files&logoColor=ffffff)](https://swissspidy.github.io/a2ui-wp/nightly.zip)
 
 Note: Requires **WordPress 7.1+** and **PHP 8.0+**.
@@ -27,6 +29,7 @@ The plugin registers one admin page and one script. The renderer itself lives in
 - `packages/a2ui-wp/src/core/` wraps [`@a2ui/web_core`](https://www.npmjs.com/package/@a2ui/web_core), the reference implementation of the A2UI client side. Message processing, the per-surface data model, data binding, the `${...}` expression syntax and the basic catalog's functions all come from there. The wrapper adds a change counter for React, wraps outgoing `action` and `error` messages in their envelope, and reads JSON Lines.
 - `packages/a2ui-wp/src/react/` is the React layer: `<A2UIRenderer>` / `<A2UISurface>`, hooks for catalog components (`useDynamicString`, `useBoundValue`, `useChecks`, `useAction`), and the component catalog that maps every basic catalog component onto `@wordpress/components`.
 - `src/admin/` is the playground page, with the example streams as hard-coded JSON.
+- `inc/agent.php` is a small demo agent: a REST endpoint that asks the site's AI provider for A2UI messages.
 
 The bundle is built with `@wordpress/scripts`, so `@wordpress/components`, `@wordpress/element` and `@wordpress/i18n` resolve to the copies WordPress already loads rather than being bundled. What ships is `@a2ui/web_core` (its Lit components are tree-shaken out), the catalog, and the playground.
 
@@ -75,11 +78,20 @@ processor.onAction( ( message ) => transport.send( message ) );
 
 ## Architecture notes
 
-**wp-admin is the host, not the server.** The plugin renders surfaces and produces `action` messages; it does not run an agent. An external agent reaching a site through the WordPress MCP adapter is a different situation: those hosts speak MCP Apps (`ui://` resources rendered in an iframe), not A2UI, so A2UI payloads would be opaque to them. This renderer therefore serves in-admin agents first. The [A2UI and MCP Apps patterns](https://developers.googleblog.com/a2ui-and-mcp-apps/) leave room for a later bridge that wraps a surface rendered by this plugin as a `ui://` resource for external hosts.
+**wp-admin is the host.** The plugin renders surfaces and produces `action` messages; the agent it ships is a demo. An external agent reaching a site through the WordPress MCP adapter is a different situation: those hosts speak MCP Apps (`ui://` resources rendered in an iframe), not A2UI, so A2UI payloads would be opaque to them. This renderer therefore serves in-admin agents first. The [A2UI and MCP Apps patterns](https://developers.googleblog.com/a2ui-and-mcp-apps/) leave room for a later bridge that wraps a surface rendered by this plugin as a `ui://` resource for external hosts.
 
 **Streaming is optional.** A2UI is designed for progressive rendering over a stream, but nothing here needs it: `processMessages()` takes a complete array, which is what a REST round-trip returns. On typical WordPress hosting, where an agent runs in PHP and long-lived responses are awkward, a REST endpoint that returns the whole message list per turn is the pragmatic default. `processJsonl()` covers hosts that can stream. Out-of-order delivery works either way: components referenced before they are defined render nothing until they arrive, and nothing renders until the `root` component exists.
 
-**No agent yet.** The playground renders bundled and pasted streams. Connecting it to an agent running inside WordPress through the AI Client is the intended next step; the processor's API is what that integration would call.
+**The agent is a demo.** Each turn is one model call through the WordPress AI Client, with the A2UI basic catalog described in a system instruction ([`inc/agent-instructions.md`](./inc/agent-instructions.md)). The model has no tools and no access to the site's data: it builds screens from the request alone, and makes up sample data where it needs some. It shows the round trip, not a production agent.
+
+## The agent
+
+**Ask the agent** sends the request to `POST /wp-json/a2ui-wp/v1/agent`, which answers with a list of A2UI messages. The playground renders them. When a button in the result sends an event, the playground posts it back to the same endpoint, together with the original request, the messages so far and the data model, and applies the messages the agent answers with: usually a data model update and a changed component, such as a confirmation.
+
+The endpoint is stateless and limited to users who can `manage_options`, since every request can cost money with the AI provider. Two filters change what it does:
+
+- `a2ui_wp_agent_response` answers a request without the AI Client. Return a list of messages, or the JSON text of `{"messages": [...]}`, to plug in another agent. The end-to-end tests use it for a deterministic stub ([`tests/e2e/mu-plugins/stub-agent.php`](./tests/e2e/mu-plugins/stub-agent.php)).
+- `a2ui_wp_agent_instructions` changes the system instruction, for example to describe a custom catalog.
 
 ## Status and known gaps
 
@@ -89,6 +101,13 @@ processor.onAction( ( message ) => transport.send( message ) );
 - `DateTimeInput` stores whatever the WordPress pickers emit (a local ISO-like string without a zone offset).
 - The icon map covers the basic catalog's names with the closest `@wordpress/icons` equivalent; a few (`volume*`, `print`, `stop`) are approximations.
 - Messages are validated by `@a2ui/web_core` against the basic catalog's schemas. Unknown component types render a warning `Notice`, missing references render nothing.
+- The bundle is about 85 KB gzipped, most of it `zod`, which `@a2ui/web_core` depends on.
+
+## What's next
+
+- **Tools for the agent.** Give the model abilities from the WordPress Abilities API, so the screens it builds show the site's real posts, users and settings, and its actions change them.
+- **Licensing.** Dual-licensing the plugin as Apache-2.0 or GPL-2.0-or-later, as the npm package already is under Apache-2.0, is in [#8](https://github.com/swissspidy/a2ui-wp/pull/8).
+- **Graft.** [Graft](https://github.com/swissspidy/graft) compiles customizations into declarative UI builds for a host; A2UI is a candidate for that build format, with this renderer drawing it in wp-admin.
 
 ## License
 

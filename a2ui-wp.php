@@ -29,4 +29,5 @@ define( 'A2UI_WP_FILE', __FILE__ );
 define( 'A2UI_WP_DIR', __DIR__ );
 
 require_once __DIR__ . '/inc/functions.php';
+require_once __DIR__ . '/inc/agent.php';
 require_once __DIR__ . '/inc/default-filters.php';

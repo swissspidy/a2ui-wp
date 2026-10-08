@@ -17,7 +17,9 @@ Renders agent-generated A2UI surfaces inside wp-admin with the WordPress compone
 
 The plugin adds an **A2UI** page under **Tools** with a playground: pick one of the bundled example streams, or paste your own, and render it. Every action the rendered UI would send back to an agent is shown in a log.
 
-This is a proof of concept. It ships no agent of its own; the plan is to connect the renderer to agents running inside WordPress through the AI Client.
+If the site has an AI provider configured for the WordPress AI Client, the playground can also ask an agent to build a screen from a description, and sends the actions of the screen's buttons back to it.
+
+This is a proof of concept. The agent is a demo: it has no tools and no access to the site's data.
 
 == Frequently Asked Questions ==
 
