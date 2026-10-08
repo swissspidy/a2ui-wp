@@ -1,7 +1,7 @@
 {
 	"name": "swissspidy/a2ui-wp",
 	"description": "Renders agent-generated A2UI surfaces inside wp-admin with the WordPress component library.",
-	"license": "GPL-2.0-or-later",
+	"license": "Apache-2.0 OR GPL-2.0-or-later",
 	"type": "wordpress-plugin",
 	"authors": [
 		{

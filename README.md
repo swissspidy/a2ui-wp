@@ -1,6 +1,6 @@
 # A2UI for WordPress
 
-[![License](https://img.shields.io/github/license/swissspidy/a2ui-wp)](https://github.com/swissspidy/a2ui-wp/blob/main/LICENSE)
+[![License: Apache-2.0 OR GPL-2.0-or-later](https://img.shields.io/badge/license-Apache--2.0%20OR%20GPL--2.0--or--later-blue)](#license)
 
 Renders agent-generated [A2UI](https://a2ui.org/) surfaces inside wp-admin with the WordPress component library. Proof of concept.
 
@@ -92,6 +92,13 @@ processor.onAction( ( message ) => transport.send( message ) );
 
 ## License
 
-GPL-2.0-or-later, like WordPress. See [`LICENSE`](./LICENSE).
+Licensed under either of
+
+- Apache License, Version 2.0 ([`LICENSE-APACHE`](./LICENSE-APACHE))
+- GNU General Public License, version 2 or later ([`LICENSE-GPL`](./LICENSE-GPL))
+
+at your option (SPDX: `Apache-2.0 OR GPL-2.0-or-later`).
+
+The built JavaScript bundles [`@wordpress/icons`](https://www.npmjs.com/package/@wordpress/icons), which is GPL-2.0-or-later, so the built plugin as distributed is covered by the GPL.
 
 This is an independent implementation of the A2UI protocol written from the published specification; it does not vendor code from the Apache-2.0 licensed [a2ui-project/a2ui](https://github.com/a2ui-project/a2ui) repository.

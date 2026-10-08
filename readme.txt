@@ -19,6 +19,8 @@ The plugin adds an **A2UI** page under **Tools** with a playground: pick one of 
 
 This is a proof of concept. It ships no agent of its own; the plan is to connect the renderer to agents running inside WordPress through the AI Client.
 
+The source code is dual-licensed under the Apache License 2.0 or the GNU GPL v2 (or later), at your option. The plugin as distributed bundles GPL-licensed code and is therefore distributed under the GPL.
+
 == Frequently Asked Questions ==
 
 = Which A2UI version is supported? =
