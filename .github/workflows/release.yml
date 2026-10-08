@@ -135,7 +135,10 @@ jobs:
       # Tarballs: no install, no lifecycle scripts. Provenance comes from
       # publishConfig.provenance in each package. A version already on npm is
       # skipped, and an existing tag too, so a run that failed partway can be
-      # re-run. Each stage ID goes in the job summary, for approving.
+      # re-run. Each stage ID goes in the job summary, for approving. A staged
+      # version is not on npm yet, and this job cannot list stages (that needs
+      # a maintainer's login), so approve or reject what a failed run staged
+      # before re-running it.
       - name: Stage, tag and create GitHub releases
         env:
           GH_TOKEN: ${{ github.token }}
