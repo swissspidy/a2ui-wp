@@ -3,9 +3,9 @@ export {
 	A2UISurface,
 	type A2UIRendererProps,
 	type A2UISurfaceProps,
-} from './renderer';
-export { A2UINode, A2UIChildren } from './node';
-export { wordPressCatalog, createCatalog } from './catalog';
+} from './renderer.js';
+export { A2UINode, A2UIChildren } from './node.js';
+export { wordPressCatalog, createCatalog } from './catalog/index.js';
 export {
 	useProcessor,
 	useSurface,
@@ -13,7 +13,7 @@ export {
 	useCatalog,
 	type A2UIComponentProps,
 	type ComponentCatalog,
-} from './context';
+} from './context.js';
 export {
 	useResolveScope,
 	useDynamicValue,
@@ -25,4 +25,4 @@ export {
 	useChecks,
 	useAction,
 	useAccessibility,
-} from './hooks';
+} from './hooks.js';

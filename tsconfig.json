@@ -14,7 +14,15 @@
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"types": [ "node" ]
+		"types": [ "node" ],
+		"paths": {
+			"@swissspidy/a2ui-wp": [ "./packages/a2ui-wp/src/index.ts" ]
+		}
 	},
-	"include": [ "src/**/*", "tests/js/**/*", "tests/e2e/**/*" ]
+	"include": [
+		"src/**/*",
+		"packages/*/src/**/*",
+		"tests/js/**/*",
+		"tests/e2e/**/*"
+	]
 }

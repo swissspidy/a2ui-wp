@@ -5,7 +5,7 @@ import {
 	A2UIProcessor,
 	type ActionMessage,
 	type ClientMessage,
-} from '../../src/core/processor';
+} from '@swissspidy/a2ui-wp';
 
 const CATALOG =
 	'https://a2ui.org/specification/v0_9_1/catalogs/basic/catalog.json';

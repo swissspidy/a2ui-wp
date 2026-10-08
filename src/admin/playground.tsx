@@ -28,7 +28,11 @@ import {
 /**
  * Internal dependencies
  */
-import { A2UIProcessor, A2UIRenderer, type ClientMessage } from '../index';
+import {
+	A2UIProcessor,
+	A2UIRenderer,
+	type ClientMessage,
+} from '@swissspidy/a2ui-wp';
 import { examples, type Example } from './examples';
 
 interface LogEntry {

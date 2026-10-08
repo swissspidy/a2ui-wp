@@ -1,0 +1,54 @@
+{
+	"name": "@swissspidy/a2ui-wp",
+	"version": "0.1.0",
+	"description": "Render A2UI surfaces with the WordPress component library.",
+	"author": "Pascal Birchler",
+	"license": "Apache-2.0",
+	"keywords": [
+		"a2ui",
+		"agents",
+		"wordpress",
+		"gutenberg",
+		"react"
+	],
+	"homepage": "https://github.com/swissspidy/a2ui-wp/tree/main/packages/a2ui-wp#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/swissspidy/a2ui-wp.git",
+		"directory": "packages/a2ui-wp"
+	},
+	"bugs": {
+		"url": "https://github.com/swissspidy/a2ui-wp/issues"
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false,
+	"dependencies": {
+		"@a2ui/web_core": "^0.12.0"
+	},
+	"peerDependencies": {
+		"@wordpress/components": "^41.0.0",
+		"@wordpress/element": "^8.7.0",
+		"@wordpress/i18n": "^6.28.0",
+		"@wordpress/icons": "^17.0.0",
+		"react": "^18.0.0 || ^19.0.0"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"clean": "rm -rf dist"
+	}
+}
