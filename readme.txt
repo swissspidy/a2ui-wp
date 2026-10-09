@@ -21,6 +21,8 @@ If the site has an AI provider configured for the WordPress AI Client, the playg
 
 This is a proof of concept. The agent is a demo: it has no tools and no access to the site's data.
 
+The source code is dual-licensed under the Apache License 2.0 or the GNU GPL v2 (or later), at your option. The plugin as distributed bundles GPL-2.0-or-later and Apache-2.0 code and is therefore distributed under the GPL, version 3 or later.
+
 == Frequently Asked Questions ==
 
 = Which A2UI version is supported? =
