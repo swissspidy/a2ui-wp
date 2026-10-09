@@ -6,6 +6,7 @@
 .gitignore
 .wordpress-org
 .npmpackagejsonlintrc.json
+.npmrc
 .nvmrc
 .wp-env.json
 .wp-env.override.json
