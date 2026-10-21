@@ -27,7 +27,7 @@
 		"packages/*"
 	],
 	"devDependencies": {
-		"@a2ui/web_core": "^0.12.0",
+		"@a2ui/web_core": "^0.14.0",
 		"@changesets/changelog-github": "^1.0.1",
 		"@changesets/cli": "^3.0.3",
 		"@playwright/test": "^1.63.0",
