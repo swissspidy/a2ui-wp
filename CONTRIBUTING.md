@@ -18,6 +18,10 @@ Run `npm install` and `npm run build` to build the JavaScript and CSS.
 - `npm run wp-env run tests-cli --env-cwd=wp-content/plugins/a2ui-wp vendor/bin/phpunit` runs the PHP unit tests.
 - `npm run test:e2e` runs the browser tests.
 
+### Licensing
+
+This project is dual-licensed under Apache-2.0 OR GPL-2.0-or-later. Unless you explicitly state otherwise, any contribution you submit is licensed under both, without any additional terms or conditions.
+
 ### Releasing the npm package
 
 `packages/a2ui-wp` is published to npm as `@swissspidy/a2ui-wp` with [Changesets](https://github.com/changesets/changesets). A pull request that changes the package adds a changeset with `npm run changeset`. Once it is merged, the release workflow opens a "Version packages" pull request; merging that publishes the new version.

@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"description": "Renders agent-generated A2UI surfaces inside wp-admin with the WordPress component library.",
 	"author": "Pascal Birchler",
-	"license": "GPL-2.0-or-later",
+	"license": "Apache-2.0 OR GPL-2.0-or-later",
 	"keywords": [
 		"wordpress",
 		"wordpress-plugin",

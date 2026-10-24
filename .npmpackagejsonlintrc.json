@@ -1,5 +1,11 @@
 {
 	"extends": "@wordpress/npm-package-json-lint-config",
+	"rules": {
+		"valid-values-license": [
+			"error",
+			[ "Apache-2.0 OR GPL-2.0-or-later" ]
+		]
+	},
 	"overrides": [
 		{
 			"patterns": [ "packages/a2ui-wp/package.json" ],
